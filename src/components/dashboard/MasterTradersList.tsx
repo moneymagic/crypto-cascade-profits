@@ -6,9 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { useTraderStore } from "@/lib/traderStore";
+import { RefreshCw } from "lucide-react";
+import { useTraderMetricsUpdate } from "@/hooks/useTraderMetricsUpdate";
 
 export function MasterTradersList() {
   const allTraders = useTraderStore((state) => state.traders);
+  const { isUpdating, updateNow } = useTraderMetricsUpdate();
   
   // Get the top 4 traders based on profit30d
   const featuredTraders = useMemo(() => {
@@ -26,9 +29,20 @@ export function MasterTradersList() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Master Traders em Destaque</CardTitle>
-        <Link to="/traders">
-          <Button variant="link" size="sm">Ver Todos</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={updateNow} 
+            disabled={isUpdating}
+            title="Atualizar métricas"
+          >
+            <RefreshCw className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
+          </Button>
+          <Link to="/traders">
+            <Button variant="link" size="sm">Ver Todos</Button>
+          </Link>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

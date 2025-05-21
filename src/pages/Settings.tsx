@@ -13,7 +13,9 @@ import MasterTraderDashboard from "@/components/settings/MasterTraderDashboard";
 import { useSearchParams } from "react-router-dom";
 import { 
   useTraderStore, 
-  masterTraderProfileToTraderData 
+  masterTraderProfileToTraderData, 
+  calculateTraderMetrics,
+  updateTraderMetrics
 } from "@/lib/traderStore";
 
 const Settings = () => {
@@ -128,9 +130,8 @@ const Settings = () => {
       strategyName: data.strategyName,
       bio: data.bio,
       photoUrl: photoPreview ? photoPreview : "",
-      winRate: data.winRate || "65%",
-      profit30d: data.profit30d || "+15.0%",
-      profit90d: data.profit90d || "+45.0%"
+      apiKey: data.apiKey,
+      apiSecret: data.apiSecret
     });
     
     // Add the trader to the store
@@ -148,8 +149,31 @@ const Settings = () => {
     
     toast({
       title: "Cadastro Realizado",
-      description: "Seu cadastro como Master Trader foi concluído com sucesso! Você agora não paga taxas na plataforma."
+      description: "Seu cadastro como Master Trader foi concluído com sucesso! As métricas serão calculadas automaticamente com base nas suas operações na Bybit."
     });
+
+    // Calcular métricas iniciais após um breve intervalo
+    setTimeout(async () => {
+      try {
+        // Calcular métricas com base nas operações da Bybit
+        const metrics = await calculateTraderMetrics(data.apiKey, data.apiSecret, true);
+        
+        // Atualizar trader com as métricas calculadas
+        updateTraderMetrics(traderData.id, metrics);
+        
+        toast({
+          title: "Métricas Atualizadas",
+          description: "Suas métricas de desempenho foram calculadas com sucesso!"
+        });
+      } catch (error) {
+        console.error("Erro ao calcular métricas iniciais:", error);
+        toast({
+          title: "Erro ao Calcular Métricas",
+          description: "Ocorreu um erro ao calcular suas métricas de desempenho. Será feita uma nova tentativa mais tarde.",
+          variant: "destructive"
+        });
+      }
+    }, 2000);
   };
   
   // Handle canceling master trader status

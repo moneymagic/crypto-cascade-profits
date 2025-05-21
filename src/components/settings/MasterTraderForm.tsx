@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
-import { FileText, Upload, Key, TrendingUp } from "lucide-react";
+import { FileText, Upload, Key } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -26,15 +28,6 @@ const formSchema = z.object({
   bio: z.string().min(10, {
     message: "A bio deve ter pelo menos 10 caracteres.",
   }),
-  winRate: z.string().regex(/^\d+%$/, {
-    message: "Win Rate deve estar no formato 'XX%'.",
-  }).optional().or(z.literal("")),
-  profit30d: z.string().regex(/^[+-]\d+(\.\d+)?%$/, {
-    message: "Lucro 30d deve estar no formato '+XX.X%' ou '-XX.X%'.",
-  }).optional().or(z.literal("")),
-  profit90d: z.string().regex(/^[+-]\d+(\.\d+)?%$/, {
-    message: "Lucro 90d deve estar no formato '+XX.X%' ou '-XX.X%'.",
-  }).optional().or(z.literal("")),
   photo: z.instanceof(File).optional(),
   additionalInfo: z.string().optional(),
 });
@@ -56,9 +49,6 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
       apiKey: "",
       apiSecret: "",
       bio: "",
-      winRate: "65%",
-      profit30d: "+15.0%",
-      profit90d: "+45.0%",
       additionalInfo: "",
     },
   });
@@ -88,6 +78,14 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <Alert className="bg-blue-50 border-blue-200">
+          <InfoIcon className="h-4 w-4 text-blue-500" />
+          <AlertTitle>Informação sobre métricas de desempenho</AlertTitle>
+          <AlertDescription>
+            Seu win rate e lucros dos últimos 30 e 90 dias serão calculados automaticamente com base nas operações realizadas na sua conta Bybit.
+          </AlertDescription>
+        </Alert>
+
         <FormField
           control={form.control}
           name="name"
@@ -130,74 +128,6 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
           )}
         />
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <FormField
-            control={form.control}
-            name="winRate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Win Rate</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="65%" 
-                      className="pl-10" 
-                      {...field} 
-                    />
-                  </div>
-                </FormControl>
-                <FormDescription>Ex: 65%</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="profit30d"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Lucro Últimos 30 dias</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="+15.0%" 
-                      className="pl-10" 
-                      {...field} 
-                    />
-                  </div>
-                </FormControl>
-                <FormDescription>Ex: +15.0% ou -5.0%</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="profit90d"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Lucro Últimos 90 dias</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="+45.0%" 
-                      className="pl-10" 
-                      {...field} 
-                    />
-                  </div>
-                </FormControl>
-                <FormDescription>Ex: +45.0% ou -10.0%</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
         <div className="grid gap-6 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -215,6 +145,9 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                     />
                   </div>
                 </FormControl>
+                <FormDescription>
+                  Necessária para acessar suas operações e calcular métricas de desempenho.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -237,6 +170,9 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                     />
                   </div>
                 </FormControl>
+                <FormDescription>
+                  Necessária para autenticar suas operações.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -16,6 +17,9 @@ export interface TraderData {
   description: string;
   isUserSubmitted?: boolean;
   dateCreated?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  lastUpdated?: string;
 }
 
 // Initial mock data
@@ -105,6 +109,7 @@ interface TraderStore {
   traders: TraderData[];
   addTrader: (trader: TraderData) => void;
   removeTrader: (id: string) => void;
+  updateTraderMetrics: (id: string, metrics: Partial<TraderData>) => void;
 }
 
 // Create the trader store with persistence
@@ -119,6 +124,14 @@ export const useTraderStore = create<TraderStore>()(
       removeTrader: (id: string) => 
         set((state) => ({
           traders: state.traders.filter(trader => trader.id !== id)
+        })),
+      updateTraderMetrics: (id: string, metrics: Partial<TraderData>) =>
+        set((state) => ({
+          traders: state.traders.map(trader => 
+            trader.id === id 
+              ? { ...trader, ...metrics, lastUpdated: new Date().toISOString() } 
+              : trader
+          )
         }))
     }),
     {
@@ -152,15 +165,98 @@ export const masterTraderProfileToTraderData = (profile: any): TraderData => {
     id: generateTraderId(),
     name: profile.name || "Trader",
     avatar: profile.photoUrl || "",
-    winRate: profile.winRate || "0%",
+    winRate: "0%", // Será calculado com base nos dados da API
     followers: "0",
-    profit30d: profile.profit30d || "+0%",
-    profit90d: profile.profit90d || "+0%",
-    positive: parseFloat(profile.profit30d || "0") >= 0,
+    profit30d: "+0%", // Será calculado com base nos dados da API
+    profit90d: "+0%", // Será calculado com base nos dados da API
+    positive: true,
     verified: false,
     specialization: profile.strategyName || "Crypto",
     description: profile.bio || "",
     isUserSubmitted: true,
-    dateCreated: new Date().toISOString()
+    dateCreated: new Date().toISOString(),
+    apiKey: profile.apiKey,
+    apiSecret: profile.apiSecret,
+    lastUpdated: new Date().toISOString()
   };
+};
+
+// Função para calcular métricas com base nas operações da Bybit
+export const calculateTraderMetrics = async (apiKey: string, apiSecret: string, testnet: boolean = false) => {
+  try {
+    // Importação dinâmica para evitar erros em SSR
+    const { default: BybitAPI } = await import('./bybitApi');
+    
+    const api = new BybitAPI({
+      apiKey,
+      apiSecret,
+      testnet
+    });
+    
+    // Verificar conexão
+    const isConnected = await api.testConnection();
+    if (!isConnected) {
+      throw new Error("Não foi possível conectar à API da Bybit");
+    }
+    
+    // Obter histórico de operações
+    const ordersResponse = await api.getRecentOrders();
+    const positionsResponse = await api.getPositions();
+    
+    if (!ordersResponse?.result?.list || !positionsResponse?.result?.list) {
+      throw new Error("Dados insuficientes para calcular métricas");
+    }
+    
+    const orders = ordersResponse.result.list;
+    const positions = positionsResponse.result.list;
+    
+    // Cálculos das métricas
+    let totalTrades = orders.length;
+    let winningTrades = orders.filter(order => parseFloat(order.realizedPnl || "0") > 0).length;
+    let winRate = totalTrades > 0 ? (winningTrades / totalTrades * 100).toFixed(1) + "%" : "0%";
+    
+    // Cálculo de lucro
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    
+    const recentOrders30d = orders.filter(order => 
+      new Date(order.createdTime) >= thirtyDaysAgo
+    );
+    
+    const recentOrders90d = orders.filter(order => 
+      new Date(order.createdTime) >= ninetyDaysAgo
+    );
+    
+    // Calcular P&L para 30 e 90 dias
+    let pnl30d = recentOrders30d.reduce((sum, order) => 
+      sum + parseFloat(order.realizedPnl || "0"), 0);
+    
+    let pnl90d = recentOrders90d.reduce((sum, order) => 
+      sum + parseFloat(order.realizedPnl || "0"), 0);
+    
+    // Calcular percentual baseado em um valor inicial estimado
+    const estimatedInitialBalance = 1000; // Valor arbitrário para cálculo de percentual
+    
+    const profit30d = (pnl30d / estimatedInitialBalance * 100).toFixed(1);
+    const profit90d = (pnl90d / estimatedInitialBalance * 100).toFixed(1);
+    
+    const profit30dStr = (pnl30d >= 0 ? "+" : "") + profit30d + "%";
+    const profit90dStr = (pnl90d >= 0 ? "+" : "") + profit90d + "%";
+    
+    return {
+      winRate,
+      profit30d: profit30dStr,
+      profit90d: profit90dStr,
+      positive: pnl30d >= 0
+    };
+  } catch (error) {
+    console.error("Erro ao calcular métricas do trader:", error);
+    return {
+      winRate: "0%",
+      profit30d: "+0%",
+      profit90d: "+0%",
+      positive: true
+    };
+  }
 };
