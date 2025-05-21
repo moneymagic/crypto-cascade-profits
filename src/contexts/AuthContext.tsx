@@ -212,14 +212,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log("Tentando fazer login com:", email);
       
-      // Aumentar timeout para 15 segundos para a operação de login
+      // Aumentar timeout para 30 segundos para a operação de login
       const loginPromise = supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado durante o login")), 15000);
+        setTimeout(() => reject(new Error("Tempo esgotado durante o login")), 30000);
       });
       
       const { data, error } = await Promise.race([loginPromise, timeoutPromise]);
@@ -237,7 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Login bem-sucedido, obtendo perfil para:", data.user.id);
       
-      // Buscar dados do perfil com timeout aumentado para 10 segundos
+      // Buscar dados do perfil com timeout aumentado para 20 segundos
       const profilePromise = supabase
         .from("profiles")
         .select("*")
@@ -245,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
         
       const profileTimeoutPromise = new Promise<{data: any, error: any}>((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil")), 10000);
+        setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil")), 20000);
       });
       
       const { data: profile, error: profileError } = await Promise.race([

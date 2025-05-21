@@ -27,6 +27,7 @@ export const LoginForm = () => {
   const [emailForResend, setEmailForResend] = useState("");
   const [loginError, setLoginError] = useState("");
   const [checkingCredentials, setCheckingCredentials] = useState(false);
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const navigate = useNavigate();
 
   const form = useForm<FormValues>({
@@ -51,7 +52,7 @@ export const LoginForm = () => {
         duration: 3000,
       });
       
-      // Aumentar timeout para verificação de email para 10 segundos
+      // Timeout ainda mais longo para verificação de email (20 segundos)
       const checkEmailPromise = new Promise<any>(async (resolve, reject) => {
         try {
           const { data: existingUser, error: existingError } = await supabase
@@ -66,9 +67,9 @@ export const LoginForm = () => {
         }
       });
       
-      // Configurar um timeout maior de 10 segundos
+      // Timeout de 20 segundos
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado ao verificar o e-mail")), 10000);
+        setTimeout(() => reject(new Error("Tempo esgotado ao verificar o e-mail")), 20000);
       });
       
       try {
@@ -94,12 +95,12 @@ export const LoginForm = () => {
         console.log("E-mail encontrado, verificando credenciais...");
         setCheckingCredentials(false);
         
-        // Chamar signIn para autenticar com timeout aumentado para 15 segundos
+        // Chamar signIn para autenticar com timeout aumentado para 30 segundos
         const signInPromise = signIn(data.email, data.password);
         const signInWithTimeout = Promise.race([
           signInPromise,
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Tempo esgotado ao fazer login")), 15000)
+            setTimeout(() => reject(new Error("Tempo esgotado ao fazer login")), 30000)
           )
         ]);
         
@@ -120,14 +121,40 @@ export const LoginForm = () => {
             setEmailNotConfirmed(true);
             setEmailForResend(data.email);
           } else if (error.message?.includes("Tempo esgotado")) {
-            setLoginError("O servidor está demorando para responder. Por favor, tente novamente em alguns instantes.");
+            // Se for timeout e não houver tentativas anteriores, tente novamente automaticamente
+            if (retryAttempt < 1) {
+              setRetryAttempt(retryAttempt + 1);
+              toast.info("Tentando novamente...", {
+                description: "O servidor está demorando para responder. Tentando novamente automaticamente."
+              });
+              // Esperar um momento e tentar novamente
+              setTimeout(() => {
+                onSubmit(data);
+              }, 2000);
+              return;
+            } else {
+              setLoginError("O servidor está demorando para responder. Por favor, tente novamente em alguns instantes.");
+            }
           } else {
             setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
           }
         }
       } catch (error: any) {
         if (error.message?.includes("Tempo esgotado")) {
-          setLoginError("O servidor está demorando para responder. Tente novamente em alguns instantes.");
+          // Se for timeout e não houver tentativas anteriores, tente novamente automaticamente
+          if (retryAttempt < 1) {
+            setRetryAttempt(retryAttempt + 1);
+            toast.info("Tentando novamente...", {
+              description: "O servidor está demorando para responder. Tentando novamente automaticamente."
+            });
+            // Esperar um momento e tentar novamente
+            setTimeout(() => {
+              onSubmit(data);
+            }, 2000);
+            return;
+          } else {
+            setLoginError("O servidor está demorando para responder. Tente novamente em alguns instantes.");
+          }
         } else {
           setLoginError("Erro ao verificar suas credenciais. Por favor, tente novamente.");
         }
@@ -138,6 +165,7 @@ export const LoginForm = () => {
     } finally {
       setLoading(false);
       setCheckingCredentials(false);
+      setRetryAttempt(0); // Reset retry counter when done
     }
   }
 
@@ -245,6 +273,12 @@ export const LoginForm = () => {
               "Entrar"
             )}
           </Button>
+
+          {retryAttempt > 0 && !loading && (
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              O servidor pode estar com tráfego alto no momento. Aguarde alguns instantes antes de tentar novamente.
+            </p>
+          )}
         </form>
       </Form>
     </>
