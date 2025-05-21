@@ -28,6 +28,17 @@ interface ApiKeyData {
   is_testnet: boolean;
 }
 
+// Interface para o api_keys dentro do followers
+interface FollowerWithApiKeys {
+  user_id: string;
+  allocation_percent: number;
+  api_keys: {
+    api_key: string;
+    api_secret: string;
+    is_testnet: boolean;
+  };
+}
+
 class CopyTradingService {
   private masterTradersMap: Map<string, BybitAPI> = new Map();
   private activeTradersListener: boolean = false;
@@ -172,13 +183,13 @@ class CopyTradingService {
         return;
       }
       
-      // Formatar seguidores com suas informações - fix type issues
-      const formattedFollowers: FollowerInfo[] = followers.map(f => ({
+      // Formatar seguidores com suas informações - correção para o tipo de dados
+      const formattedFollowers: FollowerInfo[] = followers.map((f: FollowerWithApiKeys) => ({
         user_id: f.user_id,
         allocation_percent: f.allocation_percent,
-        api_key: f.api_keys?.api_key || "",
-        api_secret: f.api_keys?.api_secret || "",
-        is_testnet: f.api_keys?.is_testnet || false
+        api_key: f.api_keys.api_key,
+        api_secret: f.api_keys.api_secret,
+        is_testnet: f.api_keys.is_testnet
       }));
       
       // Criar API para o master trader
