@@ -71,3 +71,13 @@ export async function getProfile() {
   
   return data
 }
+
+// Função para reenviar e-mail de confirmação
+export async function resendConfirmationEmail(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+  })
+  
+  if (error) throw error
+}

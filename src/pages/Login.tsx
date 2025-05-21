@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { VastCopyLogo } from "@/components/logo/VastCopyLogo";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -21,6 +24,8 @@ type FormValues = z.infer<typeof formSchema>;
 const Login = () => {
   const { signIn } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
+  const [emailForResend, setEmailForResend] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -33,9 +38,39 @@ const Login = () => {
   async function onSubmit(data: FormValues) {
     try {
       setLoading(true);
+      setEmailNotConfirmed(false);
       await signIn(data.email, data.password);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao fazer login:", error);
+      if (error.code === "email_not_confirmed") {
+        setEmailNotConfirmed(true);
+        setEmailForResend(data.email);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendConfirmationEmail() {
+    if (!emailForResend) return;
+    
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: emailForResend,
+      });
+      
+      if (error) throw error;
+      
+      toast.success("E-mail de confirmação reenviado com sucesso!", {
+        description: "Por favor, verifique sua caixa de entrada e spam."
+      });
+    } catch (error: any) {
+      console.error("Erro ao reenviar e-mail:", error);
+      toast.error("Erro ao reenviar e-mail de confirmação", {
+        description: error.message || "Tente novamente mais tarde"
+      });
     } finally {
       setLoading(false);
     }
@@ -47,17 +82,36 @@ const Login = () => {
         <div className="mb-8 text-center">
           <VastCopyLogo className="mx-auto h-12 w-auto mb-4" />
           <h1 className="text-2xl font-bold">VastCopy</h1>
-          <p className="text-muted-foreground">Faça login para continuar</p>
+          <p className="text-muted-foreground">Entre na sua conta para continuar</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Login</CardTitle>
             <CardDescription>
-              Entre com seu e-mail e senha para acessar sua conta
+              Digite suas credenciais para acessar a plataforma
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {emailNotConfirmed && (
+              <Alert className="mb-6 bg-amber-50 border-amber-200">
+                <AlertDescription className="text-amber-800">
+                  <div className="flex flex-col gap-2">
+                    <p>Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada e pasta de spam.</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={resendConfirmationEmail} 
+                      disabled={loading}
+                      className="self-start border-amber-500 text-amber-700 hover:bg-amber-100"
+                    >
+                      Reenviar e-mail de confirmação
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
