@@ -30,14 +30,14 @@ export function TradingOverview() {
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" stroke="#64748b" />
+              <YAxis stroke="#64748b" />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: "#1f2937", 
-                  borderColor: "#374151",
-                  color: "#f9fafb" 
+                  backgroundColor: "#f8fafc", 
+                  borderColor: "#e2e8f0",
+                  color: "#1e293b" 
                 }} 
               />
               <Line
