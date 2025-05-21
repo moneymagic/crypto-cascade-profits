@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { generateTraderId } from "@/lib/traderStore";
 import { useNavigate } from "react-router-dom";
+import { saveApiKey } from "@/lib/database"; // Added missing import
 
 const formSchema = z.object({
   name: z.string().min(2, {

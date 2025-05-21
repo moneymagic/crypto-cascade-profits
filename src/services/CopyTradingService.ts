@@ -1,4 +1,3 @@
-
 import BybitAPI, { OrderParams } from '@/lib/bybitApi';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -17,6 +16,13 @@ interface MasterTraderWithFollowers {
 interface FollowerInfo {
   user_id: string;
   allocation_percent: number;
+  api_key: string;
+  api_secret: string;
+  is_testnet: boolean;
+}
+
+// Interface para a API key retornada do banco
+interface ApiKeyData {
   api_key: string;
   api_secret: string;
   is_testnet: boolean;
@@ -166,13 +172,13 @@ class CopyTradingService {
         return;
       }
       
-      // Formatar seguidores com suas informações
+      // Formatar seguidores com suas informações - fix type issues
       const formattedFollowers: FollowerInfo[] = followers.map(f => ({
         user_id: f.user_id,
         allocation_percent: f.allocation_percent,
-        api_key: f.api_keys.api_key,
-        api_secret: f.api_keys.api_secret,
-        is_testnet: f.api_keys.is_testnet
+        api_key: f.api_keys?.api_key || "",
+        api_secret: f.api_keys?.api_secret || "",
+        is_testnet: f.api_keys?.is_testnet || false
       }));
       
       // Criar API para o master trader
