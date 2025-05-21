@@ -12,6 +12,7 @@ import Bonus from "./pages/Bonus";
 import Earnings from "./pages/Earnings";
 import Wallet from "./pages/Wallet";
 import Settings from "./pages/Settings";
+import Network from "./pages/Network";
 import MasterTraderSignup from "./pages/MasterTraderSignup";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/copy-trading" element={<CopyTrading />} />
           <Route path="/bonus" element={<Bonus />} />
+          <Route path="/network" element={<Network />} />
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/settings" element={<Settings />} />
