@@ -48,6 +48,11 @@ export const useTraderStore = create<TraderStore>()(
         try {
           set({ loading: true, error: null });
           
+          // Verificar se o cliente Supabase está inicializado
+          if (!supabase) {
+            throw new Error("Cliente Supabase não está inicializado. Verifique suas variáveis de ambiente.");
+          }
+          
           // Buscar traders do banco de dados
           const { data, error } = await supabase
             .from('traders')
@@ -87,6 +92,11 @@ export const useTraderStore = create<TraderStore>()(
       addTrader: async (trader: TraderData) => {
         try {
           set({ loading: true, error: null });
+          
+          // Verificar se o cliente Supabase está inicializado
+          if (!supabase) {
+            throw new Error("Cliente Supabase não está inicializado. Verifique suas variáveis de ambiente.");
+          }
           
           // Inserir no banco de dados
           const { data, error } = await supabase
@@ -131,6 +141,11 @@ export const useTraderStore = create<TraderStore>()(
         try {
           set({ loading: true, error: null });
           
+          // Verificar se o cliente Supabase está inicializado
+          if (!supabase) {
+            throw new Error("Cliente Supabase não está inicializado. Verifique suas variáveis de ambiente.");
+          }
+          
           // Remover do banco de dados
           const { error } = await supabase
             .from('traders')
@@ -156,6 +171,11 @@ export const useTraderStore = create<TraderStore>()(
       updateTraderMetrics: async (id: string, metrics: Partial<TraderData>) => {
         try {
           set({ loading: true, error: null });
+          
+          // Verificar se o cliente Supabase está inicializado
+          if (!supabase) {
+            throw new Error("Cliente Supabase não está inicializado. Verifique suas variáveis de ambiente.");
+          }
           
           // Atualizar no banco de dados
           const { error } = await supabase
