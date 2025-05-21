@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -123,6 +124,21 @@ const Settings = () => {
     toast({
       title: "Cadastro Realizado",
       description: "Seu cadastro como Master Trader foi concluído com sucesso! Você agora não paga taxas na plataforma."
+    });
+  };
+  
+  // Handle canceling master trader status
+  const handleCancelMasterTrader = () => {
+    // Simulate canceling master trader status
+    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    userData.isMasterTrader = false;
+    localStorage.setItem('user_data', JSON.stringify(userData));
+    
+    setIsMasterTrader(false);
+    
+    toast({
+      title: "Status Alterado",
+      description: "Você não é mais um Master Trader e voltará a pagar taxas normalmente na plataforma."
     });
   };
 
@@ -340,9 +356,22 @@ const Settings = () => {
                         </div>
                       </div>
                     </div>
+                    
+                    <div className="mt-6">
+                      <Button 
+                        variant="destructive" 
+                        className="w-full"
+                        onClick={handleCancelMasterTrader}
+                      >
+                        Deixar de Ser Master Trader
+                      </Button>
+                      <p className="text-sm text-gray-500 mt-2 text-center">
+                        Ao deixar de ser Master Trader, você voltará a pagar taxas normalmente e perderá os seguidores.
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
-                <MasterTraderDashboard />
+                <MasterTraderDashboard onCancelMasterTrader={handleCancelMasterTrader} />
               </div>
             ) : (
               <Card>

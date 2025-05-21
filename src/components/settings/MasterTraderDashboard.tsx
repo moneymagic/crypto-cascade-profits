@@ -17,7 +17,11 @@ import {
   TableRow
 } from "@/components/ui/table";
 
-const MasterTraderDashboard = () => {
+interface MasterTraderDashboardProps {
+  onCancelMasterTrader?: () => void;
+}
+
+const MasterTraderDashboard = ({ onCancelMasterTrader }: MasterTraderDashboardProps) => {
   const [activeTab, setActiveTab] = useState("overview");
   
   // Mock data for demonstration purposes
@@ -497,6 +501,24 @@ const MasterTraderDashboard = () => {
                     <Button className="w-full mt-6">
                       Salvar Configurações
                     </Button>
+                    
+                    <hr className="my-6" />
+                    
+                    <div className="space-y-3">
+                      <h3 className="font-medium text-lg text-red-600">Desativar status de Master Trader</h3>
+                      <p className="text-sm text-gray-600">
+                        Ao deixar de ser Master Trader, você voltará a pagar taxas normalmente e perderá todos os seus seguidores.
+                        Esta ação não pode ser desfeita automaticamente e você precisará preencher o formulário novamente.
+                      </p>
+                      
+                      <Button 
+                        variant="destructive" 
+                        className="w-full"
+                        onClick={onCancelMasterTrader}
+                      >
+                        Deixar de Ser Master Trader
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
