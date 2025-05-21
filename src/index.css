@@ -20,7 +20,7 @@
     --secondary: 220 15% 20%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 10% 90%;
+    --muted: 220 10% 95%;
     --muted-foreground: 215 25% 40%;
 
     --accent: 174 70% 45%;
@@ -81,3 +81,17 @@
 .gradient-line {
   @apply h-1 bg-gradient-to-r from-vastcopy-teal via-vastcopy-blue to-vastcopy-purple rounded-full;
 }
+
+/* Atualizando os cards para um design mais premium */
+.card-premium {
+  @apply bg-gradient-to-br from-[#1A1F2C] to-[#252a38] text-white border-none shadow-lg;
+}
+
+.card-premium-light {
+  @apply bg-white shadow-lg border border-[#e0e0ff];
+}
+
+.secondary-bg {
+  @apply bg-[#f8fafc];
+}
+

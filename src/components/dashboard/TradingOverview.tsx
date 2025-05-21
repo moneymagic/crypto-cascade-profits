@@ -8,6 +8,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 
 const data = [
@@ -22,11 +23,11 @@ const data = [
 
 export function TradingOverview() {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border shadow-md">
+      <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
         <CardTitle>Visão geral de trading</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
@@ -37,12 +38,16 @@ export function TradingOverview() {
                 contentStyle={{ 
                   backgroundColor: "#f8fafc", 
                   borderColor: "#e2e8f0",
-                  color: "#1e293b" 
+                  color: "#1e293b",
+                  borderRadius: "0.5rem",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
                 }} 
               />
+              <Legend />
               <Line
                 type="monotone"
                 dataKey="btc"
+                name="Bitcoin"
                 stroke="#3772FF"
                 activeDot={{ r: 8 }}
                 strokeWidth={2}
@@ -50,6 +55,7 @@ export function TradingOverview() {
               <Line
                 type="monotone"
                 dataKey="eth"
+                name="Ethereum"
                 stroke="#8E33FF"
                 strokeWidth={2}
               />

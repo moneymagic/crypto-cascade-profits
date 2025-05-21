@@ -39,7 +39,7 @@ function BonusLevel({ level, bonusRate, progress, target, earned }: LevelProps) 
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-crypto-blue to-crypto-purple flex items-center justify-center text-white font-medium">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#3772FF] to-[#8E33FF] flex items-center justify-center text-white font-medium">
             {level}
           </div>
           <div>
@@ -52,18 +52,18 @@ function BonusLevel({ level, bonusRate, progress, target, earned }: LevelProps) 
           <div className="text-xs text-muted-foreground">Meta: {target}</div>
         </div>
       </div>
-      <Progress value={progress} className="h-2" />
+      <Progress value={progress} className="h-2 bg-muted" indicatorClassName="bg-gradient-to-r from-[#3772FF] to-[#8E33FF]" />
     </div>
   );
 }
 
 export function BonusNetwork() {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border shadow-md">
+      <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
         <CardTitle>Rede de Bônus Multinível</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-6">
         <div className="bg-secondary/50 p-4 rounded-lg flex items-center justify-between">
           <div>
             <div className="text-sm text-muted-foreground">Total ganho em bônus</div>
