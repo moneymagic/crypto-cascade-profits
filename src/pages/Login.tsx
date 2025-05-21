@@ -28,6 +28,7 @@ const Login = () => {
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
   const [emailForResend, setEmailForResend] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [checkingCredentials, setCheckingCredentials] = useState(false);
   const navigate = useNavigate();
 
   const form = useForm<FormValues>({
@@ -41,12 +42,18 @@ const Login = () => {
   async function onSubmit(data: FormValues) {
     try {
       setLoading(true);
+      setCheckingCredentials(true);
       setEmailNotConfirmed(false);
       setLoginError("");
       
       console.log("Iniciando processo de login...");
       
-      // Verificar se o e-mail existe com um timeout para evitar travamentos
+      // Primeiro exibir feedback de verificação imediato
+      toast.info("Verificando suas credenciais...", {
+        duration: 3000,
+      });
+      
+      // Verificar se o e-mail existe com um timeout reduzido para 3 segundos
       const checkEmailPromise = new Promise<any>(async (resolve, reject) => {
         try {
           const { data: existingUser, error: existingError } = await supabase
@@ -61,9 +68,9 @@ const Login = () => {
         }
       });
       
-      // Configurar um timeout de 5 segundos
+      // Configurar um timeout menor de 3 segundos
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado ao verificar o e-mail")), 5000);
+        setTimeout(() => reject(new Error("Tempo esgotado ao verificar o e-mail")), 3000);
       });
       
       try {
@@ -82,17 +89,19 @@ const Login = () => {
           console.log("E-mail não encontrado:", data.email);
           setLoginError("E-mail não cadastrado. Por favor, verifique ou crie uma conta.");
           setLoading(false);
+          setCheckingCredentials(false);
           return;
         }
         
         console.log("E-mail encontrado, verificando credenciais...");
+        setCheckingCredentials(false);
         
         // Chamar signIn para autenticar com timeout
         const signInPromise = signIn(data.email, data.password);
         const signInWithTimeout = Promise.race([
           signInPromise,
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Tempo esgotado ao fazer login")), 8000)
+            setTimeout(() => reject(new Error("Tempo esgotado ao fazer login")), 5000)
           )
         ]);
         
@@ -130,6 +139,7 @@ const Login = () => {
       setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
     } finally {
       setLoading(false);
+      setCheckingCredentials(false);
     }
   }
 
@@ -246,7 +256,7 @@ const Login = () => {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Entrando...
+                      {checkingCredentials ? "Verificando..." : "Entrando..."}
                     </>
                   ) : (
                     "Entrar"
