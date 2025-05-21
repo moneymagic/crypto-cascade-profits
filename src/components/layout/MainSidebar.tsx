@@ -3,10 +3,10 @@ import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import VastCopyLogo from "@/components/logo/VastCopyLogo";
+import { VastCopyLogo } from "@/components/logo/VastCopyLogo";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { User, Users, TrendingUp, Exchange, Wallet } from "lucide-react";
+import { User, Users, TrendingUp, Wallet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarItem {
@@ -32,12 +32,12 @@ const MainSidebar = () => {
     {
       path: "/copy-trading",
       label: "Copy Trading",
-      icon: <Exchange className="mr-2 h-4 w-4" />,
+      icon: <TrendingUp className="mr-2 h-4 w-4" />,
     },
     {
       path: "/bybit-copy-trading",
       label: "Bybit Copy",
-      icon: <Exchange className="mr-2 h-4 w-4" />,
+      icon: <TrendingUp className="mr-2 h-4 w-4" />,
     },
     {
       path: "/earnings",
