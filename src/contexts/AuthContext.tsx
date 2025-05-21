@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, Profile } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log("Buscando perfil após evento SIGNED_IN para usuário:", session.user.id);
             
             // Usar Promise.race para adicionar timeout na busca do perfil
+            // Aumentando o timeout para 15 segundos (de 8 para 15)
             const profilePromise = supabase
               .from("profiles")
               .select("*")
@@ -41,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .single();
               
             const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil")), 8000);
+              setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil")), 15000);
             });
             
             try {
@@ -52,9 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
               if (error) {
                 console.error("Erro ao buscar perfil após evento:", error);
-                // Armazenar erro mas não rejeitar - não interromper o fluxo
+                // Limpar o estado do usuário em caso de erro
+                setUser(null); 
                 setAuthError(error);
                 setLoading(false);
+                
+                // Mostrar mensagem de erro para o usuário
+                toast.error("Erro ao carregar seu perfil", {
+                  description: "Por favor, tente fazer login novamente"
+                });
                 return;
               }
 
@@ -79,14 +87,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     console.error("Erro ao criar perfil automaticamente:", createError);
                     setAuthError(createError);
                     setUser(null);
+                    toast.error("Erro ao criar seu perfil", {
+                      description: "Por favor, tente fazer login novamente"
+                    });
                   } else {
                     console.log("Perfil criado automaticamente:", newProfile);
                     setUser(newProfile);
+                    setAuthError(null);
                   }
                 } catch (createError: any) {
                   console.error("Erro ao criar perfil automaticamente:", createError);
                   setAuthError(createError);
                   setUser(null);
+                  toast.error("Erro ao criar seu perfil", {
+                    description: "Por favor, tente fazer login novamente"
+                  });
                 }
                 
                 setLoading(false);
@@ -98,20 +113,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setAuthError(null);
             } catch (error: any) {
               console.error("Erro ao carregar perfil após evento:", error);
+              // Mostrar toast de erro
               toast.error("Erro ao carregar seu perfil", {
-                description: "Por favor, tente novamente"
+                description: "Por favor, tente fazer login novamente"
               });
               
-              // Armazenar erro mas não redirecionar ou limpar usuário
+              // IMPORTANTE: Limpar o usuário em caso de erro para evitar redirecionamentos indevidos
+              setUser(null);
               setAuthError(error);
-              // Não definimos o usuário como null aqui, para prevenir redirecionamentos indesejados
             }
           } catch (error: any) {
             console.error("Erro ao carregar perfil após evento:", error);
             toast.error("Erro ao carregar seu perfil", {
-              description: "Por favor, tente novamente"
+              description: "Por favor, tente fazer login novamente"
             });
             setAuthError(error);
+            setUser(null); // Limpar o usuário para evitar redirecionamentos indevidos
           } finally {
             setLoading(false);
           }
@@ -151,68 +168,102 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log("Buscando perfil para usuário com ID:", session.user.id);
         
         try {
-          const { data: profile, error } = await supabase
+          // Aumentar o timeout para buscar o perfil para 15 segundos
+          const profilePromise = supabase
             .from("profiles")
             .select("*")
             .eq("id", session.user.id)
             .single();
+            
+          const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => {
+            setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil inicial")), 15000);
+          });
           
-          if (error) {
-            console.error("Erro ao buscar perfil na inicialização:", error);
-            // Armazenar o erro mas continuar o fluxo
-            setAuthError(error);
-            // Não limpar o usuário para evitar redirecionamento incorreto
-            setLoading(false);
-            return;
-          }
+          try {
+            const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]);
           
-          if (!profile) {
-            console.error("Perfil não encontrado na inicialização para ID:", session.user.id);
-            // Criar um perfil básico para este usuário
-            try {
-              const { error: createError } = await supabase
-                .from("profiles")
-                .insert({
-                  id: session.user.id,
-                  full_name: session.user.user_metadata?.full_name || "Usuário",
-                  email: session.user.email,
-                  created_at: new Date().toISOString(),
-                  balance: 0,
-                });
-                
-              if (createError) {
-                throw createError;
-              }
-              
-              // Buscar o perfil recém-criado
-              const { data: newProfile, error: fetchError } = await supabase
-                .from("profiles")
-                .select("*")
-                .eq("id", session.user.id)
-                .single();
-                
-              if (fetchError || !newProfile) {
-                throw fetchError || new Error("Falha ao buscar perfil recém-criado");
-              }
-              
-              setUser(newProfile);
-              setAuthError(null);
-            } catch (createError: any) {
-              console.error("Erro ao criar perfil:", createError);
-              setAuthError(createError);
-              // Em caso de erro ao criar perfil, não vamos deslogar para dar chance de resolver
-              // apenas marcamos que não há usuário no contexto
+            if (error) {
+              console.error("Erro ao buscar perfil na inicialização:", error);
+              // IMPORTANTE: Em caso de erro, limpar o estado do usuário e fazer logout
+              console.log("Forçando logout devido a erro ao buscar perfil");
+              await supabase.auth.signOut();
+              setAuthError(error);
               setUser(null);
+              setLoading(false);
+              toast.error("Sessão expirada ou inválida", {
+                description: "Por favor, faça login novamente"
+              });
+              navigate("/login");
+              return;
             }
-          } else {
-            console.log("Perfil carregado na inicialização:", profile);
-            setUser(profile);
-            setAuthError(null);
+            
+            if (!profile) {
+              console.error("Perfil não encontrado na inicialização para ID:", session.user.id);
+              // Criar um perfil básico para este usuário
+              try {
+                const { error: createError } = await supabase
+                  .from("profiles")
+                  .insert({
+                    id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || "Usuário",
+                    email: session.user.email,
+                    created_at: new Date().toISOString(),
+                    balance: 0,
+                  });
+                  
+                if (createError) {
+                  throw createError;
+                }
+                
+                // Buscar o perfil recém-criado
+                const { data: newProfile, error: fetchError } = await supabase
+                  .from("profiles")
+                  .select("*")
+                  .eq("id", session.user.id)
+                  .single();
+                  
+                if (fetchError || !newProfile) {
+                  throw fetchError || new Error("Falha ao buscar perfil recém-criado");
+                }
+                
+                setUser(newProfile);
+                setAuthError(null);
+              } catch (createError: any) {
+                console.error("Erro ao criar perfil:", createError);
+                setAuthError(createError);
+                // Em caso de erro ao criar perfil, forçar logout
+                await supabase.auth.signOut();
+                setUser(null);
+                navigate("/login");
+                return;
+              }
+            } else {
+              console.log("Perfil carregado na inicialização:", profile);
+              setUser(profile);
+              setAuthError(null);
+            }
+          } catch (timeoutError: any) {
+            console.error("Timeout ao buscar perfil na inicialização:", timeoutError);
+            // IMPORTANTE: Em caso de timeout, limpar o estado do usuário e fazer logout
+            await supabase.auth.signOut();
+            setAuthError(timeoutError);
+            setUser(null);
+            setLoading(false);
+            toast.error("Tempo esgotado ao verificar sua sessão", {
+              description: "Por favor, faça login novamente"
+            });
+            navigate("/login");
+            return;
           }
         } catch (error: any) {
           console.error("Erro ao buscar perfil na inicialização:", error);
+          // IMPORTANTE: Em caso de qualquer erro, limpar usuário e redirecionar para login
+          await supabase.auth.signOut();
           setAuthError(error);
-          // Não definimos o usuário como null para evitar redirecionamento indesejado
+          setUser(null);
+          setLoading(false);
+          navigate("/login");
+          return;
         }
         
         // Verificar a rota atual
@@ -239,6 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error("Erro ao verificar usuário:", error);
       setAuthError(error);
+      setUser(null); // Limpar usuário em caso de erro
     } finally {
       setLoading(false);
     }
