@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,24 +11,8 @@ interface ExchangeProps {
 
 const exchanges: ExchangeProps[] = [
   {
-    name: "Binance",
-    logo: "B",
-    connected: true,
-    apiHealth: "good"
-  },
-  {
     name: "Bybit",
     logo: "By",
-    connected: false
-  },
-  {
-    name: "Coinbase",
-    logo: "C",
-    connected: false
-  },
-  {
-    name: "FTX",
-    logo: "F",
     connected: false
   }
 ];
@@ -91,7 +74,7 @@ export function ExchangeConnections() {
         ))}
         
         <div className="text-sm text-muted-foreground mt-4">
-          Conecte suas contas de corretora para começar a copiar traders ou se tornar um master trader.
+          Conecte sua conta da Bybit para começar a copiar traders ou se tornar um master trader.
         </div>
       </CardContent>
     </Card>
