@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/Dashboard";
@@ -149,13 +148,13 @@ const pastOperations = [
   { id: 6, date: "2023-05-01", pair: "BTC/USDT", type: "Sell", amount: "0.08 BTC", price: "$40,120", result: "+3.6%", status: "Fechada" },
 ];
 
-// Mock data for top followers
+// Mock data for top followers - updated to show dollar amounts instead of percentages
 const topFollowers = [
-  { id: 1, name: "Rafael Soares", profit: "+64.2%", since: "Jan 2023", avatar: "" },
-  { id: 2, name: "Julia Campos", profit: "+58.7%", since: "Fev 2023", avatar: "" },
-  { id: 3, name: "Pedro Marques", profit: "+52.3%", since: "Dez 2022", avatar: "" },
-  { id: 4, name: "Bianca Lopes", profit: "+49.8%", since: "Mar 2023", avatar: "" },
-  { id: 5, name: "Gabriel Santos", profit: "+45.1%", since: "Fev 2023", avatar: "" },
+  { id: 1, name: "Rafael Soares", profit: "$6,420", since: "Jan 2023", avatar: "" },
+  { id: 2, name: "Julia Campos", profit: "$5,870", since: "Fev 2023", avatar: "" },
+  { id: 3, name: "Pedro Marques", profit: "$5,230", since: "Dez 2022", avatar: "" },
+  { id: 4, name: "Bianca Lopes", profit: "$4,980", since: "Mar 2023", avatar: "" },
+  { id: 5, name: "Gabriel Santos", profit: "$4,510", since: "Fev 2023", avatar: "" },
 ];
 
 const TraderProfile = () => {
