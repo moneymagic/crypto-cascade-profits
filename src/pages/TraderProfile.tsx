@@ -24,7 +24,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Award, TrendingUp, Users, Activity } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 // Mock data for a trader
 const traders = [
@@ -157,12 +164,51 @@ const topFollowers = [
   { id: 5, name: "Gabriel Santos", profit: "$4,510", since: "Fev 2023", avatar: "" },
 ];
 
+// Form schema for copy trading investment
+const formSchema = z.object({
+  investmentAmount: z
+    .string()
+    .min(1, "Valor é obrigatório")
+    .refine(
+      (val) => {
+        const num = parseFloat(val.replace(/[^0-9,.]/g, '').replace(',', '.'));
+        return !isNaN(num) && num >= 10;
+      },
+      {
+        message: "O valor mínimo de investimento é $10",
+      }
+    ),
+  stopLoss: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        const num = parseFloat(val.replace(/[^0-9,.]/g, '').replace(',', '.'));
+        return isNaN(num) || num >= 5;
+      },
+      {
+        message: "O Stop Loss deve ser no mínimo 5%",
+      }
+    ),
+});
+
 const TraderProfile = () => {
   const { traderId } = useParams();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   
   // Find trader data based on URL parameter
   const trader = traders.find(t => t.id === traderId);
+  
+  // Form for copy trading investment
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      investmentAmount: "",
+      stopLoss: "",
+    },
+  });
   
   if (!trader) {
     return (
@@ -179,7 +225,45 @@ const TraderProfile = () => {
   }
   
   const toggleFollow = () => {
-    setIsFollowing(!isFollowing);
+    setDialogOpen(true);
+  };
+
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
+    // Format the investment amount for display
+    const amount = parseFloat(data.investmentAmount.replace(/[^0-9,.]/g, '').replace(',', '.'));
+    
+    // Close dialog
+    setDialogOpen(false);
+    
+    // Set following state
+    setIsFollowing(true);
+    
+    // Show success toast
+    toast({
+      title: "Copy Trading Ativado",
+      description: `Você agora está copiando ${trader.name} com $${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+    });
+  };
+
+  const formatCurrency = (input: string) => {
+    // Remove non-numeric characters
+    const numericValue = input.replace(/[^0-9]/g, '');
+    
+    // Convert to number and format
+    if (numericValue) {
+      const number = parseInt(numericValue, 10) / 100;
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(number);
+    }
+    
+    return input;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    const formatted = formatCurrency(e.target.value);
+    field.onChange(formatted);
   };
 
   return (
@@ -437,6 +521,71 @@ const TraderProfile = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Copy Trading Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Copiar {trader.name}</DialogTitle>
+            <DialogDescription>
+              Defina o valor que você deseja investir para copiar as operações deste trader.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="investmentAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor do Investimento</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="$0.00" 
+                        value={field.value}
+                        onChange={(e) => handleInputChange(e, field)}
+                        className="text-lg"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Valor mínimo: $10.00
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="stopLoss"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stop Loss (opcional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="5%" 
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Defina uma % de perda máxima para encerrar automaticamente o copy trading
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter className="pt-4">
+                <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">Confirmar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
