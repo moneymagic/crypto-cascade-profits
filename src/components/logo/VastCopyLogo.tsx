@@ -5,12 +5,14 @@ interface VastCopyLogoProps {
   className?: string;
   showText?: boolean;
   size?: 'small' | 'medium' | 'large';
+  textColor?: string;
 }
 
 export const VastCopyLogo: React.FC<VastCopyLogoProps> = ({ 
   className = "", 
   showText = true, 
-  size = 'medium' 
+  size = 'medium',
+  textColor = "text-white"
 }) => {
   const sizeClasses = {
     small: 'h-6',
@@ -26,7 +28,7 @@ export const VastCopyLogo: React.FC<VastCopyLogoProps> = ({
           <path 
             d="M50 20C34 20 25 35 25 50C25 65 34 80 50 80C66 80 75 65 75 50C75 35 66 20 50 20Z" 
             fill="#40C4BD" 
-            fillOpacity="0.7"
+            fillOpacity="0.9"
           />
           <circle cx="33" cy="40" r="10" fill="#40C4BD" />
           <circle cx="50" cy="25" r="10" fill="#40C4BD" />
@@ -38,7 +40,7 @@ export const VastCopyLogo: React.FC<VastCopyLogoProps> = ({
       {/* Logo text */}
       {showText && (
         <div className="flex flex-col ml-2">
-          <h1 className={`font-bold text-vastcopy-navy ${size === 'small' ? 'text-lg' : size === 'medium' ? 'text-xl' : 'text-2xl'}`}>
+          <h1 className={`font-bold ${textColor} ${size === 'small' ? 'text-lg' : size === 'medium' ? 'text-xl' : 'text-2xl'}`}>
             vastcopy
           </h1>
           <div className="h-1 w-full bg-vastcopy-gradient rounded-full"></div>

@@ -4,16 +4,16 @@ import { VastCopyLogo } from "../logo/VastCopyLogo";
 
 export function WelcomeCard() {
   return (
-    <Card className="bg-gradient-to-br from-vastcopy-navy to-vastcopy-blue border-0 overflow-hidden">
+    <Card className="bg-gradient-to-br from-vastcopy-navy to-vastcopy-blue/90 border-0 overflow-hidden shadow-lg">
       <CardContent className="p-6">
         <div className="space-y-4">
           <div className="flex items-center">
-            <VastCopyLogo className="text-white" size="large" />
+            <VastCopyLogo className="text-white" size="large" textColor="text-white" />
           </div>
           <p className="text-white/90 mt-2">
             Comece a copiar os melhores traders e ganhe bônus em vários níveis com nossa plataforma de Copy Trading.
           </p>
-          <div className="bg-white/10 p-3 rounded-md backdrop-blur-sm">
+          <div className="bg-white/10 p-3 rounded-md backdrop-blur-sm border border-white/5">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-sm text-white/70">Traders conectados</div>

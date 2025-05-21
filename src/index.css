@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -34,7 +35,7 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 215 70% 10%;
+    --sidebar-background: 203 71% 14%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 174 70% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -78,5 +79,5 @@
 }
 
 .gradient-line {
-  @apply h-1 bg-gradient-to-r from-accent via-blue-500 to-purple-400 rounded-full;
+  @apply h-1 bg-gradient-to-r from-vastcopy-teal via-vastcopy-blue to-vastcopy-purple rounded-full;
 }
