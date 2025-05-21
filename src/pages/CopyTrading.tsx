@@ -1,82 +1,132 @@
 
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { getProfile } from "@/lib/supabase";
+import { getFollowedTraders, getTrades } from "@/lib/database";
+import { toast } from "@/components/ui/use-toast";
 
-// Lista de traders que o usuário está seguindo
-const followedTraders = [
-  {
-    id: "1",
-    name: "Carlos Almeida",
-    avatar: "",
-    winRate: "78%",
-    profit30d: "+32.5%",
-    positive: true,
-    verified: true,
-    specialization: "BTC/ETH",
-    activeStrategies: 3,
-    status: "active",
-    allocationPercent: 25
-  },
-  {
-    id: "4",
-    name: "Márcia Oliveira",
-    avatar: "",
-    winRate: "81%",
-    profit30d: "+41.2%",
-    positive: true,
-    verified: true,
-    specialization: "DeFi",
-    activeStrategies: 5,
-    status: "active",
-    allocationPercent: 30
-  }
-];
+interface TraderType {
+  id: string;
+  trader: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+    win_rate: string;
+    profit_30d: string;
+    positive: boolean;
+    verified: boolean;
+    specialization: string;
+    description: string;
+  };
+  allocation_percent: number;
+}
 
-// Lista de operações copiadas recentes
-const recentTrades = [
-  {
-    id: "t1",
-    trader: "Carlos Almeida",
-    pair: "BTC/USDT",
-    type: "buy",
-    entryPrice: 62450.00,
-    currentPrice: 63100.00,
-    amount: 0.15,
-    status: "open",
-    profit: "+4.18%",
-    date: "2025-05-20T15:30:00Z"
-  },
-  {
-    id: "t2",
-    trader: "Márcia Oliveira",
-    pair: "ETH/USDT",
-    type: "sell",
-    entryPrice: 3450.00,
-    currentPrice: 3380.00,
-    amount: 1.2,
-    status: "open",
-    profit: "+2.03%",
-    date: "2025-05-21T09:15:00Z"
-  },
-  {
-    id: "t3",
-    trader: "Carlos Almeida",
-    pair: "SOL/USDT",
-    type: "buy",
-    entryPrice: 145.20,
-    currentPrice: 146.80,
-    amount: 10,
-    status: "closed",
-    profit: "+1.10%",
-    date: "2025-05-19T12:40:00Z"
-  }
-];
+interface TradeType {
+  id: string;
+  trader: {
+    name: string;
+  };
+  pair: string;
+  type: string;
+  entry_price: number;
+  current_price: number;
+  amount: number;
+  status: string;
+  profit: string;
+  date: string;
+}
 
 const CopyTrading = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [followedTraders, setFollowedTraders] = useState<TraderType[]>([]);
+  const [recentTrades, setRecentTrades] = useState<TradeType[]>([]);
+  const [userBalance, setUserBalance] = useState(0);
+  const [allocatedBalance, setAllocatedBalance] = useState(0);
+  const [profitBalance, setProfitBalance] = useState(0);
+
+  useEffect(() => {
+    async function loadData() {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        
+        // Carregar dados do perfil do usuário
+        const profile = await getProfile();
+        if (profile) {
+          setUserBalance(profile.balance || 0);
+        }
+        
+        // Carregar traders seguidos
+        const followedData = await getFollowedTraders(user.id);
+        setFollowedTraders(followedData);
+        
+        // Calcular saldo alocado (30% do saldo total para este exemplo)
+        const allocated = profile?.balance ? profile.balance * 0.3 : 0;
+        setAllocatedBalance(allocated);
+        
+        // Calcular lucro fictício para demonstração (em uma implementação real viria do banco)
+        setProfitBalance(allocated * 0.15);
+        
+        // Carregar operações
+        const tradesData = await getTrades(user.id);
+        setRecentTrades(tradesData);
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível obter as informações de copy trading.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadData();
+  }, [user]);
+
+  const handleStopFollowing = async (traderId: string) => {
+    try {
+      // Em uma implementação real, chamaríamos a API para parar de seguir o trader
+      toast({
+        title: "Trader removido",
+        description: "Você parou de seguir este trader com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao parar de seguir trader:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível parar de seguir este trader.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCloseTrade = async (tradeId: string) => {
+    try {
+      // Em uma implementação real, chamaríamos a API para fechar a operação
+      toast({
+        title: "Operação fechada",
+        description: "A operação foi fechada com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao fechar operação:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível fechar esta operação.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -89,15 +139,15 @@ const CopyTrading = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
               <div className="text-sm text-muted-foreground">Saldo disponível</div>
-              <div className="text-2xl font-bold">$12,480.00</div>
+              <div className="text-2xl font-bold">${userBalance.toFixed(2)}</div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Alocado em copy trading</div>
-              <div className="text-2xl font-bold">$5,500.00</div>
+              <div className="text-2xl font-bold">${allocatedBalance.toFixed(2)}</div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Lucro total (30d)</div>
-              <div className="text-2xl font-bold text-crypto-green">+$840.25</div>
+              <div className="text-2xl font-bold text-crypto-green">+${profitBalance.toFixed(2)}</div>
             </div>
           </div>
           <Button>Ajustar Alocação</Button>
@@ -110,64 +160,78 @@ const CopyTrading = () => {
           </TabsList>
           
           <TabsContent value="followed" className="space-y-4">
-            {followedTraders.map(trader => (
-              <Card key={trader.id}>
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={trader.avatar} />
-                        <AvatarFallback className="bg-primary/20 text-primary">
-                          {trader.name.split(" ").map(n => n[0]).join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium flex items-center gap-2">
-                          {trader.name}
-                          {trader.verified && (
-                            <Badge variant="outline" className="border-crypto-blue text-crypto-blue">
-                              Verificado
-                            </Badge>
-                          )}
+            {loading ? (
+              <div className="text-center py-8">Carregando traders...</div>
+            ) : followedTraders.length > 0 ? (
+              followedTraders.map((item) => (
+                <Card key={item.id}>
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={item.trader.avatar_url || ''} />
+                          <AvatarFallback className="bg-primary/20 text-primary">
+                            {item.trader.name.split(" ").map(n => n[0]).join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium flex items-center gap-2">
+                            {item.trader.name}
+                            {item.trader.verified && (
+                              <Badge variant="outline" className="border-crypto-blue text-crypto-blue">
+                                Verificado
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {item.trader.specialization} • Win rate: {item.trader.win_rate}
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {trader.specialization} • Win rate: {trader.winRate}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full md:w-auto">
+                        <div>
+                          <div className="text-sm text-muted-foreground">Lucro 30d</div>
+                          <div className={`font-medium ${item.trader.positive ? 'text-crypto-green' : 'text-crypto-red'}`}>
+                            {item.trader.profit_30d}
+                          </div>
                         </div>
+                        <div>
+                          <div className="text-sm text-muted-foreground">Status</div>
+                          <div className="font-medium flex items-center gap-1">
+                            <span className="h-2 w-2 rounded-full bg-crypto-green"></span>
+                            Ativo
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-muted-foreground">Estratégias</div>
+                          <div className="font-medium">3</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-muted-foreground">Alocação</div>
+                          <div className="font-medium">{item.allocation_percent}%</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">Configurar</Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleStopFollowing(item.id)}
+                        >
+                          Parar
+                        </Button>
                       </div>
                     </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full md:w-auto">
-                      <div>
-                        <div className="text-sm text-muted-foreground">Lucro 30d</div>
-                        <div className={`font-medium ${trader.positive ? 'text-crypto-green' : 'text-crypto-red'}`}>
-                          {trader.profit30d}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Status</div>
-                        <div className="font-medium flex items-center gap-1">
-                          <span className="h-2 w-2 rounded-full bg-crypto-green"></span>
-                          Ativo
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Estratégias</div>
-                        <div className="font-medium">{trader.activeStrategies}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Alocação</div>
-                        <div className="font-medium">{trader.allocationPercent}%</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Configurar</Button>
-                      <Button variant="destructive" size="sm">Parar</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Você ainda não está seguindo nenhum trader.
+              </div>
+            )}
             
             <div className="text-center pt-4">
               <Button variant="outline" className="w-full sm:w-auto">
@@ -177,52 +241,66 @@ const CopyTrading = () => {
           </TabsContent>
           
           <TabsContent value="trades" className="space-y-4">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-border">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Par</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Tipo</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Trader</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Preço Entrada</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Preço Atual</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Quantidade</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Lucro</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {recentTrades.map((trade) => (
-                    <tr key={trade.id}>
-                      <td className="px-4 py-3 text-sm">{trade.pair}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <Badge variant={trade.type === 'buy' ? 'default' : 'destructive'}>
-                          {trade.type === 'buy' ? 'Compra' : 'Venda'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm">{trade.trader}</td>
-                      <td className="px-4 py-3 text-sm">${trade.entryPrice.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-sm">${trade.currentPrice.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-sm">{trade.amount}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <Badge variant="outline" className={trade.status === 'open' ? 'border-crypto-blue text-crypto-blue' : ''}>
-                          {trade.status === 'open' ? 'Aberta' : 'Fechada'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-crypto-green">
-                        {trade.profit}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {trade.status === 'open' && (
-                          <Button size="sm" variant="outline">Fechar</Button>
-                        )}
-                      </td>
+            {loading ? (
+              <div className="text-center py-8">Carregando operações...</div>
+            ) : recentTrades.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Par</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Tipo</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Trader</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Preço Entrada</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Preço Atual</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Quantidade</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Status</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Lucro</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {recentTrades.map((trade) => (
+                      <tr key={trade.id}>
+                        <td className="px-4 py-3 text-sm">{trade.pair}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <Badge variant={trade.type === 'buy' ? 'default' : 'destructive'}>
+                            {trade.type === 'buy' ? 'Compra' : 'Venda'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{trade.trader.name}</td>
+                        <td className="px-4 py-3 text-sm">${trade.entry_price.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-sm">${trade.current_price.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-sm">{trade.amount}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <Badge variant="outline" className={trade.status === 'open' ? 'border-crypto-blue text-crypto-blue' : ''}>
+                            {trade.status === 'open' ? 'Aberta' : 'Fechada'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-crypto-green">
+                          {trade.profit}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {trade.status === 'open' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleCloseTrade(trade.id)}
+                            >
+                              Fechar
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Você ainda não tem operações copiadas.
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

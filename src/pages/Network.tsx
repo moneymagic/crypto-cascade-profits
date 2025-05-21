@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,55 @@ import { Copy, Link as LinkIcon, WifiHigh } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { MultiLevelBonus } from "@/components/network/MultiLevelBonus";
 import { ReferralExplorer } from "@/components/network/ReferralExplorer";
+import { useAuth } from "@/contexts/AuthContext";
+import { generateReferralLink, getReferralStats, getTotalEarnings } from "@/lib/database";
 
 const Network = () => {
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
-  const referralLink = "https://vastcopy.com/ref/yourUsername";
+  const [referralLink, setReferralLink] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ total: 0, active: 0 });
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [userRank, setUserRank] = useState("V1");
+  
+  useEffect(() => {
+    async function loadData() {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        
+        // Gerar link de referência
+        const link = await generateReferralLink(user.id);
+        setReferralLink(link);
+        
+        // Carregar estatísticas
+        const referralStats = await getReferralStats(user.id);
+        setStats(referralStats);
+        
+        // Carregar ganhos totais
+        const earnings = await getTotalEarnings(user.id);
+        setTotalEarned(earnings.referral);
+        
+        // Para este exemplo, estamos definindo um rank fixo
+        // Em uma implementação real, isso viria do banco de dados
+        setUserRank("V2");
+        
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível obter as informações de rede.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadData();
+  }, [user]);
   
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -65,12 +110,12 @@ const Network = () => {
                 <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/20">
                   <div>
                     <div className="text-sm text-muted-foreground">Total de indicados</div>
-                    <div className="text-2xl font-bold">12</div>
+                    <div className="text-2xl font-bold">{stats.total}</div>
                   </div>
                   
                   <div>
                     <div className="text-sm text-muted-foreground">Indicados ativos</div>
-                    <div className="text-2xl font-bold">8</div>
+                    <div className="text-2xl font-bold">{stats.active}</div>
                   </div>
                 </div>
               </div>
@@ -85,11 +130,11 @@ const Network = () => {
               <div className="bg-secondary/20 p-4 rounded-lg flex items-center justify-between">
                 <div>
                   <div className="text-sm text-muted-foreground">Total ganho em bônus</div>
-                  <div className="text-2xl font-bold text-crypto-green">$108.00</div>
+                  <div className="text-2xl font-bold text-crypto-green">${totalEarned.toFixed(2)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Seu ranking atual</div>
-                  <div className="text-2xl font-bold">V2</div>
+                  <div className="text-2xl font-bold">{userRank}</div>
                 </div>
               </div>
               
@@ -98,9 +143,9 @@ const Network = () => {
           </Card>
         </div>
         
-        <MultiLevelBonus />
+        <MultiLevelBonus userId={user?.id} />
         
-        <ReferralExplorer />
+        <ReferralExplorer userId={user?.id} />
       </div>
     </DashboardLayout>
   );

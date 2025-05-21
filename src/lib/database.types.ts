@@ -127,6 +127,205 @@ export interface Database {
           description?: string | null
         }
       }
+      followed_traders: {
+        Row: {
+          id: string
+          user_id: string
+          trader_id: string
+          allocation_percent: number
+          active: boolean
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          trader_id: string
+          allocation_percent: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          trader_id?: string
+          allocation_percent?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      trades: {
+        Row: {
+          id: string
+          user_id: string
+          trader_id: string
+          pair: string
+          type: string
+          entry_price: number
+          current_price: number
+          amount: number
+          status: string
+          profit: string
+          date: string
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          trader_id: string
+          pair: string
+          type: string
+          entry_price: number
+          current_price: number
+          amount: number
+          status: string
+          profit: string
+          date: string
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          trader_id?: string
+          pair?: string
+          type?: string
+          entry_price?: number
+          current_price?: number
+          amount?: number
+          status?: string
+          profit?: string
+          date?: string
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      earnings: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          amount: number
+          date: string
+          status: string
+          trader_id: string | null
+          strategy: string | null
+          level: number | null
+          rank: string | null
+          referred_user: string | null
+          user_rank: string | null
+          difference_rate: string | null
+          followers: number | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          amount: number
+          date: string
+          status: string
+          trader_id?: string | null
+          strategy?: string | null
+          level?: number | null
+          rank?: string | null
+          referred_user?: string | null
+          user_rank?: string | null
+          difference_rate?: string | null
+          followers?: number | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          amount?: number
+          date?: string
+          status?: string
+          trader_id?: string | null
+          strategy?: string | null
+          level?: number | null
+          rank?: string | null
+          referred_user?: string | null
+          user_rank?: string | null
+          difference_rate?: string | null
+          followers?: number | null
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      referrals: {
+        Row: {
+          id: string
+          user_id: string
+          referred_user_id: string
+          level: number
+          status: string
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          referred_user_id: string
+          level: number
+          status: string
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          referred_user_id?: string
+          level?: number
+          status?: string
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      user_ranks: {
+        Row: {
+          id: string
+          user_id: string
+          rank: string
+          bonus_rate: string
+          progress: number
+          target: string
+          earned: string
+          required_referrals: string | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          rank: string
+          bonus_rate: string
+          progress: number
+          target: string
+          earned: string
+          required_referrals?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          rank?: string
+          bonus_rate?: string
+          progress?: number
+          target?: string
+          earned?: string
+          required_referrals?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
     }
   }
 }
