@@ -51,7 +51,7 @@ export const LoginForm = () => {
         duration: 3000,
       });
       
-      // Verificar se o e-mail existe com um timeout reduzido para 3 segundos
+      // Aumentar timeout para verificação de email para 10 segundos
       const checkEmailPromise = new Promise<any>(async (resolve, reject) => {
         try {
           const { data: existingUser, error: existingError } = await supabase
@@ -66,9 +66,9 @@ export const LoginForm = () => {
         }
       });
       
-      // Configurar um timeout menor de 3 segundos
+      // Configurar um timeout maior de 10 segundos
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado ao verificar o e-mail")), 3000);
+        setTimeout(() => reject(new Error("Tempo esgotado ao verificar o e-mail")), 10000);
       });
       
       try {
@@ -94,12 +94,12 @@ export const LoginForm = () => {
         console.log("E-mail encontrado, verificando credenciais...");
         setCheckingCredentials(false);
         
-        // Chamar signIn para autenticar com timeout
+        // Chamar signIn para autenticar com timeout aumentado para 15 segundos
         const signInPromise = signIn(data.email, data.password);
         const signInWithTimeout = Promise.race([
           signInPromise,
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Tempo esgotado ao fazer login")), 5000)
+            setTimeout(() => reject(new Error("Tempo esgotado ao fazer login")), 15000)
           )
         ]);
         
@@ -120,14 +120,14 @@ export const LoginForm = () => {
             setEmailNotConfirmed(true);
             setEmailForResend(data.email);
           } else if (error.message?.includes("Tempo esgotado")) {
-            setLoginError("O login está demorando muito. Por favor, tente novamente.");
+            setLoginError("O servidor está demorando para responder. Por favor, tente novamente em alguns instantes.");
           } else {
             setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
           }
         }
       } catch (error: any) {
         if (error.message?.includes("Tempo esgotado")) {
-          setLoginError("A verificação do e-mail está demorando muito. Por favor, tente novamente.");
+          setLoginError("O servidor está demorando para responder. Tente novamente em alguns instantes.");
         } else {
           setLoginError("Erro ao verificar suas credenciais. Por favor, tente novamente.");
         }

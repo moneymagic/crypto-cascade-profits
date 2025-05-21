@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, Profile } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -211,14 +212,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log("Tentando fazer login com:", email);
       
-      // Adicionar um timeout mais curto para a operação de login
+      // Aumentar timeout para 15 segundos para a operação de login
       const loginPromise = supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado durante o login")), 4000);
+        setTimeout(() => reject(new Error("Tempo esgotado durante o login")), 15000);
       });
       
       const { data, error } = await Promise.race([loginPromise, timeoutPromise]);
@@ -236,7 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("Login bem-sucedido, obtendo perfil para:", data.user.id);
       
-      // Buscar dados do perfil com timeout
+      // Buscar dados do perfil com timeout aumentado para 10 segundos
       const profilePromise = supabase
         .from("profiles")
         .select("*")
@@ -244,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
         
       const profileTimeoutPromise = new Promise<{data: any, error: any}>((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil")), 3000);
+        setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil")), 10000);
       });
       
       const { data: profile, error: profileError } = await Promise.race([
@@ -321,7 +322,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (error.message?.includes("Email not confirmed")) {
         errorMessage = "E-mail não confirmado";
       } else if (error.message?.includes("Tempo esgotado")) {
-        errorMessage = "A operação está demorando muito. Verifique sua conexão e tente novamente";
+        errorMessage = "O servidor está demorando para responder. Tente novamente em alguns instantes.";
       }
       
       toast.error("Erro ao fazer login", {
