@@ -3,12 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Traders from "./pages/Traders";
 import Portfolio from "./pages/Portfolio";
 import CopyTrading from "./pages/CopyTrading";
-import Bonus from "./pages/Bonus";
 import Earnings from "./pages/Earnings";
 import Wallet from "./pages/Wallet";
 import Settings from "./pages/Settings";
@@ -31,8 +30,8 @@ const App = () => (
           <Route path="/trader/:traderId" element={<TraderProfile />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/copy-trading" element={<CopyTrading />} />
-          <Route path="/bonus" element={<Bonus />} />
           <Route path="/network" element={<Network />} />
+          <Route path="/bonus" element={<Navigate to="/network" replace />} />
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/settings" element={<Settings />} />

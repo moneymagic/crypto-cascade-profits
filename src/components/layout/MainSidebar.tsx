@@ -6,7 +6,6 @@ import {
   Users, 
   PieChart, 
   Copy, 
-  Gift, 
   BarChart, 
   Settings,
   Wallet,
@@ -29,7 +28,6 @@ export function MainSidebar() {
     { icon: PieChart, label: "Portfolio", path: "/portfolio" },
     { icon: Copy, label: "Copy Trading", path: "/copy-trading" },
     { icon: WifiHigh, label: "Network", path: "/network" },
-    { icon: Gift, label: "Bônus", path: "/bonus" },
     { icon: BarChart, label: "Ganhos", path: "/earnings" },
     { icon: Wallet, label: "Carteira", path: "/wallet" },
   ];
