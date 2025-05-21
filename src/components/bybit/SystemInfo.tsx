@@ -17,6 +17,19 @@ const SystemInfo: React.FC = () => {
       </div>
       
       <div>
+        <h3 className="font-semibold mb-2">Monitoramento Automático</h3>
+        <p className="text-sm">
+          O sistema agora monitora em tempo real as ordens executadas pelo Master Trader diretamente na plataforma Bybit:
+        </p>
+        <ul className="list-disc list-inside text-sm mt-2 space-y-1">
+          <li>O Master Trader pode operar normalmente na plataforma Bybit</li>
+          <li>Este sistema detecta automaticamente as ordens executadas</li>
+          <li>As ordens são replicadas instantaneamente na conta do Seguidor</li>
+          <li>Você pode escolher quais pares de trading serão monitorados</li>
+        </ul>
+      </div>
+      
+      <div>
         <h3 className="font-semibold mb-2">Permissões de API Necessárias</h3>
         <p className="text-sm">
           Para este sistema funcionar, você precisa criar API Keys na Bybit com as seguintes permissões:

@@ -7,7 +7,9 @@ import AccountBalances from './AccountBalances';
 import OrderForm from './OrderForm';
 import TradeResults from './TradeResults';
 import SystemInfo from './SystemInfo';
+import WebSocketMonitor from './WebSocketMonitor';
 import { useBybitTrading } from '@/hooks/useBybitTrading';
+import { tradingPairs } from './types';
 
 const LiveTradingSystem: React.FC = () => {
   const {
@@ -28,7 +30,14 @@ const LiveTradingSystem: React.FC = () => {
     tradeResults,
     masterBalance,
     followerBalance,
-    executeRealTrade
+    executeRealTrade,
+    wsStatus,
+    isListening,
+    startListening,
+    stopListening,
+    monitoredSymbols,
+    toggleSymbolMonitoring,
+    fetchBalances
   } = useBybitTrading();
 
   return (
@@ -55,27 +64,44 @@ const LiveTradingSystem: React.FC = () => {
         <AccountBalances 
           masterBalance={masterBalance} 
           followerBalance={followerBalance} 
+          onRefreshBalances={fetchBalances}
         />
         
-        <OrderForm 
-          symbol={symbol}
-          side={side}
-          quantity={quantity}
-          price={price}
-          isExecuting={isExecuting}
+        <WebSocketMonitor
+          wsStatus={wsStatus}
+          isListening={isListening}
           isTradingEnabled={isTradingEnabled}
-          onSymbolChange={setSymbol}
-          onSideChange={setSide}
-          onQuantityChange={setQuantity}
-          onPriceChange={setPrice}
-          onExecuteTrade={executeRealTrade}
+          onStartListening={startListening}
+          onStopListening={stopListening}
+          monitoredSymbols={monitoredSymbols}
+          availableSymbols={tradingPairs}
+          onToggleSymbol={toggleSymbolMonitoring}
         />
         
-        <Tabs defaultValue="results">
+        <Tabs defaultValue="manual">
           <TabsList className="mb-4">
-            <TabsTrigger value="results">Operações</TabsTrigger>
+            <TabsTrigger value="manual">Trading Manual</TabsTrigger>
+            <TabsTrigger value="results">Histórico de Operações</TabsTrigger>
             <TabsTrigger value="info">Informações</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="manual">
+            <div className="border-t pt-4">
+              <OrderForm 
+                symbol={symbol}
+                side={side}
+                quantity={quantity}
+                price={price}
+                isExecuting={isExecuting}
+                isTradingEnabled={isTradingEnabled}
+                onSymbolChange={setSymbol}
+                onSideChange={setSide}
+                onQuantityChange={setQuantity}
+                onPriceChange={setPrice}
+                onExecuteTrade={executeRealTrade}
+              />
+            </div>
+          </TabsContent>
           
           <TabsContent value="results">
             <TradeResults tradeResults={tradeResults} />

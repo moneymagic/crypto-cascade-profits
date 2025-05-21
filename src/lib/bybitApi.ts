@@ -23,6 +23,8 @@ class BybitAPI {
   private apiKey: string;
   private apiSecret: string;
   private baseUrl: string;
+  private wsUrl: string;
+  private wsConnection: WebSocket | null = null;
   
   constructor(credentials: BybitCredentials) {
     this.apiKey = credentials.apiKey;
@@ -30,6 +32,9 @@ class BybitAPI {
     this.baseUrl = credentials.testnet 
       ? 'https://api-testnet.bybit.com' 
       : 'https://api.bybit.com';
+    this.wsUrl = credentials.testnet
+      ? 'wss://stream-testnet.bybit.com/v5/private'
+      : 'wss://stream.bybit.com/v5/private';
   }
   
   // Método para gerar a assinatura necessária para autenticação
@@ -109,6 +114,97 @@ class BybitAPI {
     if (symbol) params.symbol = symbol;
     
     return await this.request('/v5/position/list', 'GET', params);
+  }
+
+  // Obter histórico de ordens recentes
+  async getRecentOrders(symbol?: string, limit: number = 50) {
+    const params: Record<string, any> = { 
+      category: 'spot',
+      limit
+    };
+    if (symbol) params.symbol = symbol;
+    
+    return await this.request('/v5/order/history', 'GET', params);
+  }
+
+  // WebSocket Connection Methods
+
+  // Conecta ao WebSocket da Bybit para receber atualizações em tempo real
+  connectToWebSocket(onMessage: (data: any) => void, onOpen?: () => void, onError?: (error: Event) => void, onClose?: () => void) {
+    if (this.wsConnection) {
+      this.wsConnection.close();
+    }
+
+    try {
+      this.wsConnection = new WebSocket(this.wsUrl);
+      
+      this.wsConnection.onopen = () => {
+        console.log('WebSocket connection established');
+        // Authenticate websocket connection
+        const expires = Date.now() + 10000;
+        const signature = this.getSignature(expires);
+        
+        const authMessage = JSON.stringify({
+          op: 'auth',
+          args: [this.apiKey, expires, signature]
+        });
+        
+        this.wsConnection?.send(authMessage);
+        
+        // Subscribe to execution updates (filled orders)
+        setTimeout(() => {
+          if (this.wsConnection?.readyState === WebSocket.OPEN) {
+            const subscribeMessage = JSON.stringify({
+              op: 'subscribe',
+              args: ['execution']
+            });
+            this.wsConnection.send(subscribeMessage);
+            
+            if (onOpen) onOpen();
+          }
+        }, 1000);
+      };
+      
+      this.wsConnection.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          onMessage(data);
+        } catch (e) {
+          console.error('WebSocket message parsing error:', e);
+        }
+      };
+      
+      this.wsConnection.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        if (onError) onError(error);
+      };
+      
+      this.wsConnection.onclose = () => {
+        console.log('WebSocket connection closed');
+        this.wsConnection = null;
+        if (onClose) onClose();
+      };
+      
+      return true;
+    } catch (error) {
+      console.error('WebSocket connection error:', error);
+      return false;
+    }
+  }
+  
+  // Desconecta do WebSocket
+  disconnectWebSocket() {
+    if (this.wsConnection) {
+      this.wsConnection.close();
+      this.wsConnection = null;
+      return true;
+    }
+    return false;
+  }
+  
+  // Verifica se o WebSocket está conectado
+  isWebSocketConnected(): boolean {
+    return this.wsConnection !== null && this.wsConnection.readyState === WebSocket.OPEN;
   }
 }
 

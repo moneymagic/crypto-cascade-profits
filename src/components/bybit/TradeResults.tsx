@@ -28,6 +28,7 @@ const TradeResults: React.FC<TradeResultsProps> = ({ tradeResults }) => {
             <tr>
               <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Data/Hora</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Tipo</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Origem</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Par</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Direção</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Quantidade</th>
@@ -38,8 +39,8 @@ const TradeResults: React.FC<TradeResultsProps> = ({ tradeResults }) => {
           <tbody className="divide-y divide-border">
             {tradeResults.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
-                  Nenhuma operação realizada ainda. Conecte as contas e execute uma operação para começar.
+                <td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">
+                  Nenhuma operação realizada ainda. Conecte as contas e execute uma operação ou inicie o monitoramento automático.
                 </td>
               </tr>
             ) : (
@@ -49,6 +50,11 @@ const TradeResults: React.FC<TradeResultsProps> = ({ tradeResults }) => {
                   <td className="px-4 py-3 text-sm">
                     <Badge variant="outline" className={result.id.startsWith('master') ? 'border-primary text-primary' : 'border-crypto-blue text-crypto-blue'}>
                       {result.id.startsWith('master') ? 'Master' : 'Seguidor'}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <Badge variant={result.source === 'WebSocket' ? 'secondary' : 'default'} className="text-xs">
+                      {result.source === 'WebSocket' ? 'Automático' : 'Manual'}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-sm">{result.symbol}</td>
