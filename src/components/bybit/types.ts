@@ -33,3 +33,10 @@ export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'err
 export interface MonitoringSettings {
   monitoringActive: boolean;
 }
+
+// Trading pairs for Bybit perpetual futures
+export const tradingPairs = [
+  "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", 
+  "DOGEUSDT", "ADAUSDT", "DOTUSDT", "MATICUSDT", "LTCUSDT",
+  "AVAXUSDT", "LINKUSDT", "ATOMUSDT", "UNIUSDT", "ETCUSDT"
+];

@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { tradingPairs } from './types';
+
+// Define trading pairs here directly since we want to support all Bybit perpetual futures
+const tradingPairs = [
+  "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", 
+  "DOGEUSDT", "ADAUSDT", "DOTUSDT", "MATICUSDT", "LTCUSDT",
+  "AVAXUSDT", "LINKUSDT", "ATOMUSDT", "UNIUSDT", "ETCUSDT"
+];
 
 interface OrderFormProps {
   symbol: string;
