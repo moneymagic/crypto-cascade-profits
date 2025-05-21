@@ -1,8 +1,8 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, Profile } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useIdleTimer } from "@/hooks/useIdleTimer";
 
 interface AuthContextType {
   user: Profile | null;
@@ -10,15 +10,41 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetIdleTimer: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Tempo de inatividade em milissegundos (1 minuto)
+const IDLE_TIMEOUT = 60000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
   const navigate = useNavigate();
+
+  // Função para lidar com o logout por inatividade
+  const handleIdle = () => {
+    if (user) {
+      console.log("Inatividade detectada. Fazendo logout automático.");
+      toast.info("Sessão expirada por inatividade", {
+        description: "Você foi desconectado devido à inatividade"
+      });
+      signOut();
+    }
+  };
+
+  // Usar o hook de inatividade
+  const { resetTimer } = useIdleTimer({
+    timeout: IDLE_TIMEOUT,
+    onIdle: handleIdle
+  });
+
+  // Resetar o timer de inatividade
+  const resetIdleTimer = () => {
+    resetTimer();
+  };
 
   useEffect(() => {
     // Checar autenticação atual quando o componente é montado
@@ -397,6 +423,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Mostrar mensagem de sucesso
       toast.success("Login realizado com sucesso!");
       
+      // Inicializar o timer de inatividade
+      resetIdleTimer();
+      
       // Não redirecione aqui - o componente Login vai lidar com isso
       console.log("Login completo no AuthContext, aguardando componente Login redirecionar");
     } catch (error: any) {
@@ -485,7 +514,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading, 
     signIn, 
     signUp, 
-    signOut
+    signOut,
+    resetIdleTimer
   };
 
   return (
