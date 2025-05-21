@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import BybitAPI from '@/lib/bybitApi';
+import { getApiKeys, saveApiKey } from '@/lib/database';
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BybitConnectorProps {
   type: 'master' | 'follower';
@@ -17,13 +19,50 @@ interface BybitConnectorProps {
 }
 
 const BybitConnector = ({ type, onConnect, onDisconnect, isConnected }: BybitConnectorProps) => {
+  const { user } = useAuth();
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [isTestnet, setIsTestnet] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Carregar chaves de API do banco de dados
+  useEffect(() => {
+    async function loadApiKeys() {
+      if (!user) return;
+      
+      try {
+        setIsLoading(true);
+        const keys = await getApiKeys(user.id, `bybit_${type}`);
+        
+        if (keys && keys.length > 0) {
+          setApiKey(keys[0].api_key);
+          setApiSecret(keys[0].api_secret);
+          setIsTestnet(keys[0].is_testnet);
+          
+          // Auto-conectar se as credenciais existirem
+          if (!isConnected) {
+            const bybitApi = new BybitAPI({
+              apiKey: keys[0].api_key,
+              apiSecret: keys[0].api_secret,
+              testnet: keys[0].is_testnet
+            });
+            
+            onConnect(bybitApi);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading API keys:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    loadApiKeys();
+  }, [user, type, isConnected, onConnect]);
 
   const handleConnect = async () => {
-    if (!apiKey || !apiSecret) {
+    if (!apiKey || !apiSecret || !user) {
       toast({
         title: "Erro",
         description: "API Key e Secret são obrigatórios",
@@ -45,16 +84,20 @@ const BybitConnector = ({ type, onConnect, onDisconnect, isConnected }: BybitCon
       const isSuccess = await bybitApi.testConnection();
       
       if (isSuccess) {
+        // Salvar credenciais no banco de dados
+        await saveApiKey(
+          user.id,
+          `bybit_${type}`,
+          apiKey,
+          apiSecret,
+          isTestnet
+        );
+        
         toast({
           title: "Conexão Estabelecida",
           description: `Conta ${type === 'master' ? 'Master' : 'Seguidor'} conectada com sucesso.`
         });
         onConnect(bybitApi);
-        
-        // Salvar credenciais no localStorage (apenas para demo)
-        localStorage.setItem(`bybit_${type}_apiKey`, apiKey);
-        localStorage.setItem(`bybit_${type}_apiSecret`, apiSecret);
-        localStorage.setItem(`bybit_${type}_testnet`, String(isTestnet));
       } else {
         toast({
           title: "Falha na Conexão",
@@ -75,11 +118,6 @@ const BybitConnector = ({ type, onConnect, onDisconnect, isConnected }: BybitCon
   };
 
   const handleDisconnect = () => {
-    // Remover credenciais do localStorage
-    localStorage.removeItem(`bybit_${type}_apiKey`);
-    localStorage.removeItem(`bybit_${type}_apiSecret`);
-    localStorage.removeItem(`bybit_${type}_testnet`);
-    
     onDisconnect();
     
     toast({
@@ -88,29 +126,22 @@ const BybitConnector = ({ type, onConnect, onDisconnect, isConnected }: BybitCon
     });
   };
 
-  // Tentar recuperar credenciais do localStorage ao carregar
-  useEffect(() => {
-    const savedApiKey = localStorage.getItem(`bybit_${type}_apiKey`);
-    const savedApiSecret = localStorage.getItem(`bybit_${type}_apiSecret`);
-    const savedTestnet = localStorage.getItem(`bybit_${type}_testnet`) === 'true';
-    
-    if (savedApiKey && savedApiSecret) {
-      setApiKey(savedApiKey);
-      setApiSecret(savedApiSecret);
-      setIsTestnet(savedTestnet);
-      
-      // Auto-conectar se as credenciais existirem
-      if (!isConnected) {
-        const bybitApi = new BybitAPI({
-          apiKey: savedApiKey,
-          apiSecret: savedApiSecret,
-          testnet: savedTestnet
-        });
-        
-        onConnect(bybitApi);
-      }
-    }
-  }, []);
+  if (isLoading) {
+    return (
+      <Card className="border shadow-md">
+        <CardHeader>
+          <CardTitle>
+            {type === 'master' ? 'Conta Master Trader (Bybit)' : 'Conta Seguidor (Bybit)'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center py-6">
+            <div className="animate-pulse h-6 w-32 bg-secondary rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border shadow-md">

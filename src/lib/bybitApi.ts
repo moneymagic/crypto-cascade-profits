@@ -1,3 +1,4 @@
+
 import crypto from 'crypto';
 
 // Interface para as credenciais da API Bybit

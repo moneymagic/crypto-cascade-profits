@@ -2,9 +2,8 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { WebSocketStatus } from './types';
-import { RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle2, Wifi, WifiOff } from "lucide-react";
 
 interface WebSocketMonitorProps {
   wsStatus: WebSocketStatus;
@@ -21,58 +20,56 @@ const WebSocketMonitor: React.FC<WebSocketMonitorProps> = ({
   onStartListening,
   onStopListening
 }) => {
+  const getStatusBadge = () => {
+    switch (wsStatus) {
+      case 'connected':
+        return <Badge variant="outline" className="bg-crypto-green/10 text-crypto-green border-crypto-green">Conectado</Badge>;
+      case 'connecting':
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500">Conectando</Badge>;
+      case 'error':
+        return <Badge variant="outline" className="bg-crypto-red/10 text-crypto-red border-crypto-red">Erro</Badge>;
+      default:
+        return <Badge variant="outline">Desconectado</Badge>;
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">Monitoramento Automático de Futuros Perpétuos</h3>
-          <p className="text-sm text-muted-foreground">Escuta todas as ordens de futuros perpétuos do Master Trader e as replica automaticamente</p>
-        </div>
-        
+    <div className="border rounded-lg p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-center gap-2">
         <div className="flex items-center gap-2">
-          <Badge 
-            variant={
-              wsStatus === 'connected' ? 'outline' :
-              wsStatus === 'connecting' ? 'secondary' :
-              wsStatus === 'error' ? 'destructive' : 'outline'
-            }
-            className={wsStatus === 'connected' ? 'border-green-500 text-green-500' : ''}
-          >
-            {wsStatus === 'connected' ? 'Conectado' :
-             wsStatus === 'connecting' ? 'Conectando...' :
-             wsStatus === 'error' ? 'Erro' : 'Desconectado'}
-          </Badge>
-          
-          {isListening ? (
-            <Button 
-              variant="outline" 
-              onClick={onStopListening}
-              size="sm"
-            >
-              Parar Monitoramento
-            </Button>
-          ) : (
-            <Button 
-              onClick={onStartListening}
-              disabled={!isTradingEnabled || wsStatus === 'connecting'}
-              size="sm"
-              className="gap-2"
-            >
-              <RefreshCw size={14} className={wsStatus === 'connecting' ? 'animate-spin' : ''} />
-              Iniciar Monitoramento
-            </Button>
-          )}
+          {wsStatus === 'connected' ? 
+            <Wifi className="h-5 w-5 text-crypto-green" /> : 
+            <WifiOff className="h-5 w-5 text-muted-foreground" />
+          }
+          <span className="font-medium">Status WebSocket:</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {getStatusBadge()}
+          {isListening && <span className="text-sm text-muted-foreground">Monitorando ordens</span>}
         </div>
       </div>
       
-      {isListening && (
-        <Alert className="bg-green-500/10 border-green-500">
-          <AlertTitle>Monitoramento Ativo</AlertTitle>
-          <AlertDescription>
-            O sistema está escutando todas as ordens de futuros perpétuos do Master Trader e replicando-as automaticamente para a conta do Seguidor.
-          </AlertDescription>
-        </Alert>
-      )}
+      <div className="w-full md:w-auto flex gap-2">
+        {isListening ? (
+          <Button 
+            variant="outline" 
+            className="border-crypto-red text-crypto-red hover:bg-crypto-red/10"
+            onClick={onStopListening}
+          >
+            <AlertCircle className="h-4 w-4 mr-2" />
+            Parar Monitoramento
+          </Button>
+        ) : (
+          <Button 
+            className="bg-crypto-green hover:bg-crypto-green/80 text-white"
+            disabled={!isTradingEnabled}
+            onClick={onStartListening}
+          >
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            Iniciar Monitoramento
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
