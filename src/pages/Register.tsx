@@ -31,6 +31,17 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [registrationError, setRegistrationError] = useState("");
   const navigate = useNavigate();
+  
+  // Initialize the form with useForm hook
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   async function onSubmit(data: FormValues) {
     try {
@@ -40,6 +51,8 @@ const Register = () => {
       
       await signUp(data.email, data.password, data.fullName);
       console.log("Cadastro realizado com sucesso, redirecionando para login");
+      
+      toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar seu cadastro.");
       
       // Redirecionar para login após sucesso
       setTimeout(() => {
