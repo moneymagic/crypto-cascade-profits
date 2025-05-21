@@ -1,17 +1,11 @@
-import React, { useState } from "react";
-import { ChevronRight, ChevronLeft, Users } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getReferrals } from "@/lib/database";
+import { ChevronRight, ChevronLeft, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
 
 interface ReferralUser {
   id: string;
@@ -315,7 +309,28 @@ const getReferralPath = (path: string[]): ReferralLevel[] => {
   return result;
 };
 
-export function ReferralExplorer() {
+export const ReferralExplorer: React.FC<ReferralExplorerProps> = ({ userId }) => {
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadReferrals() {
+      if (!userId) return;
+      
+      try {
+        setIsLoading(true);
+        const data = await getReferrals(userId);
+        setReferrals(data);
+      } catch (error) {
+        console.error("Error loading referrals:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    loadReferrals();
+  }, [userId]);
+
   const [path, setPath] = useState<string[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   
