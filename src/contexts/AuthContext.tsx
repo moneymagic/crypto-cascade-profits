@@ -20,15 +20,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Se o cliente Supabase não estiver inicializado, não faz sentido continuar
-    if (!supabase) {
-      setLoading(false);
-      toast.error("Erro de conexão com Supabase. Verifique as variáveis de ambiente.", {
-        duration: 10000,
-      });
-      return;
-    }
-
     // Checar autenticação atual quando o componente é montado
     checkUser();
 
@@ -67,11 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function checkUser() {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    
     try {
       setLoading(true);
       
@@ -96,11 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signIn(email: string, password: string) {
-    if (!supabase) {
-      toast.error("Supabase não está configurado. Verifique variáveis de ambiente.");
-      return;
-    }
-    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -113,17 +94,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       navigate("/traders");
     } catch (error: any) {
       console.error("Erro de login:", error);
-      toast.error(error.message || "Erro ao fazer login");
+      toast.error("Erro ao fazer login", {
+        description: error.message || "Verifique suas credenciais e tente novamente"
+      });
       throw error;
     }
   }
 
   async function signUp(email: string, password: string, fullName: string) {
-    if (!supabase) {
-      toast.error("Supabase não está configurado. Verifique variáveis de ambiente.");
-      return;
-    }
-    
     try {
       // Criar novo usuário
       const { data, error } = await supabase.auth.signUp({
@@ -153,21 +131,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (profileError) throw profileError;
       }
 
-      toast.success("Conta criada com sucesso! Faça login para continuar.");
+      toast.success("Conta criada com sucesso!", {
+        description: "Faça login para continuar."
+      });
       navigate("/login");
     } catch (error: any) {
       console.error("Erro de cadastro:", error);
-      toast.error(error.message || "Erro ao criar conta");
+      toast.error("Erro ao criar conta", {
+        description: error.message || "Tente novamente com informações diferentes"
+      });
       throw error;
     }
   }
 
   async function signOut() {
-    if (!supabase) {
-      toast.error("Supabase não está configurado. Verifique variáveis de ambiente.");
-      return;
-    }
-    
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -177,7 +154,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       navigate("/login");
     } catch (error: any) {
       console.error("Erro ao sair:", error);
-      toast.error(error.message || "Erro ao sair da conta");
+      toast.error("Erro ao sair da conta", {
+        description: error.message || "Tente novamente"
+      });
     }
   }
 

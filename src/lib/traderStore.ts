@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from './supabase';
@@ -48,11 +47,6 @@ export const useTraderStore = create<TraderStore>()(
         try {
           set({ loading: true, error: null });
           
-          // Verificar se o cliente Supabase está inicializado
-          if (!supabase) {
-            throw new Error("Cliente Supabase não está inicializado. Verifique suas variáveis de ambiente.");
-          }
-          
           // Buscar traders do banco de dados
           const { data, error } = await supabase
             .from('traders')
@@ -86,17 +80,15 @@ export const useTraderStore = create<TraderStore>()(
         } catch (error) {
           console.error("Erro ao buscar traders:", error);
           set({ error: "Falha ao carregar traders", loading: false });
+          toast.error("Falha ao carregar traders", {
+            description: "Não foi possível buscar os traders. Tente novamente mais tarde."
+          });
         }
       },
       
       addTrader: async (trader: TraderData) => {
         try {
           set({ loading: true, error: null });
-          
-          // Verificar se o cliente Supabase está inicializado
-          if (!supabase) {
-            throw new Error("Cliente Supabase não está inicializado. Verifique suas variáveis de ambiente.");
-          }
           
           // Inserir no banco de dados
           const { data, error } = await supabase
@@ -129,22 +121,21 @@ export const useTraderStore = create<TraderStore>()(
             loading: false
           }));
           
-          toast.success("Trader adicionado com sucesso");
+          toast.success("Trader adicionado com sucesso", {
+            description: "O trader foi adicionado à plataforma com sucesso."
+          });
         } catch (error) {
           console.error("Erro ao adicionar trader:", error);
           set({ error: "Falha ao adicionar trader", loading: false });
-          toast.error("Erro ao adicionar trader");
+          toast.error("Erro ao adicionar trader", {
+            description: "Não foi possível adicionar o trader. Tente novamente."
+          });
         }
       },
       
       removeTrader: async (id: string) => {
         try {
           set({ loading: true, error: null });
-          
-          // Verificar se o cliente Supabase está inicializado
-          if (!supabase) {
-            throw new Error("Cliente Supabase não está inicializado. Verifique suas variáveis de ambiente.");
-          }
           
           // Remover do banco de dados
           const { error } = await supabase
@@ -160,22 +151,21 @@ export const useTraderStore = create<TraderStore>()(
             loading: false
           }));
           
-          toast.success("Trader removido com sucesso");
+          toast.success("Trader removido com sucesso", {
+            description: "O trader foi removido da plataforma."
+          });
         } catch (error) {
           console.error("Erro ao remover trader:", error);
           set({ error: "Falha ao remover trader", loading: false });
-          toast.error("Erro ao remover trader");
+          toast.error("Erro ao remover trader", {
+            description: "Não foi possível remover o trader. Tente novamente."
+          });
         }
       },
       
       updateTraderMetrics: async (id: string, metrics: Partial<TraderData>) => {
         try {
           set({ loading: true, error: null });
-          
-          // Verificar se o cliente Supabase está inicializado
-          if (!supabase) {
-            throw new Error("Cliente Supabase não está inicializado. Verifique suas variáveis de ambiente.");
-          }
           
           // Atualizar no banco de dados
           const { error } = await supabase
@@ -200,9 +190,16 @@ export const useTraderStore = create<TraderStore>()(
             ),
             loading: false
           }));
+          
+          toast.success("Métricas atualizadas", {
+            description: "As métricas do trader foram atualizadas com sucesso."
+          });
         } catch (error) {
           console.error("Erro ao atualizar métricas do trader:", error);
           set({ error: "Falha ao atualizar métricas", loading: false });
+          toast.error("Falha ao atualizar métricas", {
+            description: "Não foi possível atualizar as métricas. Tente novamente."
+          });
         }
       }
     }),
@@ -221,11 +218,11 @@ export const generateTraderId = (): string => {
 };
 
 // Helper to convert profile data to trader data
-export const masterTraderProfileToTraderData = (profile: any, userId: string): TraderData => {
+export const masterTraderProfileToTraderData = (profile: any): TraderData => {
   return {
     id: generateTraderId(),
     name: profile.name || "Trader",
-    avatar: profile.photo ? URL.createObjectURL(profile.photo) : "",
+    avatar: profile.photoUrl || "",
     winRate: "0%", // Será calculado com base nos dados da API
     followers: "0",
     profit30d: "+0%", // Será calculado com base nos dados da API
@@ -239,7 +236,7 @@ export const masterTraderProfileToTraderData = (profile: any, userId: string): T
     apiKey: profile.apiKey,
     apiSecret: profile.apiSecret,
     lastUpdated: new Date().toISOString(),
-    user_id: userId
+    user_id: supabase.auth.getUser().then(({ data }) => data?.user?.id) || undefined
   };
 };
 
