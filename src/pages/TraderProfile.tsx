@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/Dashboard";
@@ -170,6 +169,14 @@ const TraderProfile = () => {
     field.onChange(formatted);
   };
 
+  // Function to safely format follower count
+  const formatFollowers = (followers: string | number): string => {
+    if (typeof followers === 'number') {
+      return followers.toLocaleString();
+    }
+    return String(followers);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -225,7 +232,7 @@ const TraderProfile = () => {
                     <div className="text-xs text-muted-foreground">30 dias</div>
                   </div>
                   <div>
-                    <div className="font-medium text-2xl">{typeof trader.followers === 'number' ? trader.followers.toLocaleString() : trader.followers}</div>
+                    <div className="font-medium text-2xl">{formatFollowers(trader.followers)}</div>
                     <div className="text-xs text-muted-foreground">Seguidores</div>
                   </div>
                 </div>
