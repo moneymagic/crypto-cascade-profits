@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -109,7 +108,7 @@ const Settings = () => {
     setConfirmPassword('');
   };
 
-  // Mock submit for master trader form - in real app, this would send data to backend
+  // Handle master trader form submission
   const handleMasterTraderSubmit = (data) => {
     console.log("Submitted master trader application:", data);
     // Simulate successful submission
@@ -123,7 +122,7 @@ const Settings = () => {
     
     toast({
       title: "Cadastro Realizado",
-      description: "Seu cadastro como Master Trader foi concluído com sucesso!"
+      description: "Seu cadastro como Master Trader foi concluído com sucesso! Você agora não paga taxas na plataforma."
     });
   };
 
@@ -304,6 +303,45 @@ const Settings = () => {
           <TabsContent value="mastertrader">
             {isMasterTrader ? (
               <div className="space-y-6">
+                <Card className="mb-6">
+                  <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
+                    <CardTitle>
+                      <div className="flex items-center">
+                        <UserPlus className="mr-2 h-5 w-5" />
+                        Status Master Trader
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center p-4 bg-green-50 border border-green-100 rounded-md">
+                      <div className="bg-green-100 p-2 rounded-full mr-4">
+                        <Shield className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-green-800">Conta Master Trader Ativa</h3>
+                        <p className="text-sm text-green-600">
+                          Sua conta possui privilégios de Master Trader. Você não paga taxas na plataforma 
+                          e pode ser seguido por outros usuários.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md mb-4">
+                      <div className="flex items-start">
+                        <div className="bg-blue-100 p-2 rounded-full mr-3 mt-0.5">
+                          <Lock className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-blue-800">Restrições da Conta</h3>
+                          <p className="text-sm text-blue-600">
+                            Como Master Trader, você não pode seguir outros traders, mas pode ser seguido 
+                            por outros usuários na plataforma.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
                 <MasterTraderDashboard />
               </div>
             ) : (
@@ -317,6 +355,7 @@ const Settings = () => {
                   </CardTitle>
                   <CardDescription className="text-gray-200">
                     Preencha o formulário abaixo para se tornar um master trader na plataforma VastCopy.
+                    Master Traders não pagam taxas e podem ser seguidos por outros usuários.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">

@@ -41,10 +41,9 @@ const MasterTraderDashboard = () => {
       { id: 5, since: "2023-03-28", volume: 12350.80, revenue: 123.51 },
     ],
     balances: {
-      available: 1875.25,
-      locked: 200.00,
+      available: 2543.75,
       pending: 468.50,
-      total: 2543.75
+      total: 3012.25
     }
   };
 
@@ -251,10 +250,6 @@ const MasterTraderDashboard = () => {
                         <span className="font-medium">${mockData.balances.available.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Retido</span>
-                        <span className="font-medium">${mockData.balances.locked.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
                         <span className="text-muted-foreground">Pendente</span>
                         <span className="font-medium">${mockData.balances.pending.toFixed(2)}</span>
                       </div>
@@ -262,6 +257,9 @@ const MasterTraderDashboard = () => {
                       <div className="flex justify-between">
                         <span className="font-medium">Total</span>
                         <span className="font-bold">${mockData.balances.total.toFixed(2)}</span>
+                      </div>
+                      <div className="mt-2 p-2 bg-green-50 border border-green-100 rounded-md text-sm text-green-700">
+                        Como Master Trader, você não paga taxas e tem acesso a todas as funcionalidades da plataforma.
                       </div>
                     </div>
                     
@@ -476,6 +474,10 @@ const MasterTraderDashboard = () => {
                         <Switch id="accept-followers" defaultChecked />
                         <Label htmlFor="accept-followers">Permitir que novos usuários sigam suas trades</Label>
                       </div>
+                    </div>
+                    
+                    <div className="p-3 bg-amber-50 border border-amber-100 rounded-md text-sm text-amber-700 mb-4">
+                      <p><strong>Lembrete:</strong> Como Master Trader, você não pode seguir outros traders, mas pode ser seguido por outros usuários.</p>
                     </div>
                     
                     <div className="space-y-2">
