@@ -234,6 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // Em caso de erro ao criar perfil, forçar logout
                 await supabase.auth.signOut();
                 setUser(null);
+                setLoading(false);
                 navigate("/login");
                 return;
               }
@@ -292,6 +293,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthError(error);
       setUser(null); // Limpar usuário em caso de erro
     } finally {
+      // IMPORTANTE: Garantir que o estado de loading seja sempre finalizado
       setLoading(false);
     }
   }
