@@ -14,6 +14,7 @@ import Wallet from "./pages/Wallet";
 import Settings from "./pages/Settings";
 import Network from "./pages/Network";
 import MasterTraderSignup from "./pages/MasterTraderSignup";
+import TraderProfile from "./pages/TraderProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/traders" element={<Traders />} />
+          <Route path="/trader/:traderId" element={<TraderProfile />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/copy-trading" element={<CopyTrading />} />
           <Route path="/bonus" element={<Bonus />} />

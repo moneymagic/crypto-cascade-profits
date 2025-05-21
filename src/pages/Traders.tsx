@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -169,7 +170,9 @@ const Traders = () => {
                 </div>
                 
                 <div className="flex items-center justify-between mt-6">
-                  <Button variant="outline" size="sm">Ver perfil</Button>
+                  <Link to={`/trader/${trader.id}`}>
+                    <Button variant="outline" size="sm">Ver perfil</Button>
+                  </Link>
                   <Button size="sm">Copiar Trader</Button>
                 </div>
               </CardContent>
