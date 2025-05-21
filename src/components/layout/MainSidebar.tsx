@@ -4,7 +4,6 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   Home, 
   Users, 
-  PieChart, 
   Copy, 
   BarChart, 
   Settings,
@@ -23,7 +22,6 @@ export function MainSidebar() {
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: Users, label: "Traders", path: "/traders" },
-    { icon: PieChart, label: "Portfolio", path: "/portfolio" },
     { icon: Copy, label: "Copy Trading", path: "/copy-trading" },
     { icon: WifiHigh, label: "Network", path: "/network" },
     { icon: BarChart, label: "Ganhos", path: "/earnings" },

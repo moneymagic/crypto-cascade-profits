@@ -16,7 +16,6 @@ import TraderProfile from '@/pages/TraderProfile';
 import Settings from '@/pages/Settings';
 import Wallet from '@/pages/Wallet';
 import Network from '@/pages/Network';
-import Portfolio from '@/pages/Portfolio';
 import CopyTrading from '@/pages/CopyTrading';
 import Earnings from '@/pages/Earnings';
 import Bonus from '@/pages/Bonus';
@@ -67,7 +66,6 @@ function App() {
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
           <Route path="/network" element={<ProtectedRoute><Network /></ProtectedRoute>} />
-          <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
           <Route path="/copy-trading" element={<ProtectedRoute><CopyTrading /></ProtectedRoute>} />
           <Route path="/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
           <Route path="/bonus" element={<ProtectedRoute><Bonus /></ProtectedRoute>} />
