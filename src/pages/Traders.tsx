@@ -9,12 +9,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTraderStore, TraderData } from "@/lib/traderStore";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 
 const Traders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortType, setSortType] = useState("profit30d");
-  const traders = useTraderStore((state) => state.traders);
   const [displayTraders, setDisplayTraders] = useState<TraderData[]>([]);
+  
+  const { user } = useAuth();
+  const fetchTraders = useTraderStore((state) => state.fetchTraders);
+  const traders = useTraderStore((state) => state.traders);
+  const loading = useTraderStore((state) => state.loading);
+
+  // Carregar traders do Supabase quando o componente montar
+  const { refetch } = useQuery({
+    queryKey: ['traders'],
+    queryFn: fetchTraders,
+    enabled: !!user, // Só buscar traders quando o usuário estiver logado
+  });
 
   useEffect(() => {
     // Filter traders
@@ -57,6 +70,14 @@ const Traders = () => {
     setDisplayTraders(sorted);
   }, [traders, searchTerm, sortType]);
 
+  // Function to safely format follower count
+  const formatFollowers = (followers: string | number): string => {
+    if (typeof followers === 'number') {
+      return followers.toLocaleString();
+    }
+    return String(followers);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -82,72 +103,112 @@ const Traders = () => {
           </Tabs>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {displayTraders.length > 0 ? (
-            displayTraders.map((trader) => (
-              <Card key={trader.id} className="overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-crypto-blue to-crypto-purple" />
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-crypto-blue to-crypto-purple opacity-50" />
                 <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={trader.avatar} />
-                      <AvatarFallback className="bg-primary/20 text-primary text-xl">
-                        {trader.name.split(" ").map(n => n[0]).join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-semibold text-lg flex items-center gap-2">
-                        {trader.name}
-                        {trader.verified && (
-                          <Badge variant="outline" className="border-crypto-blue text-crypto-blue">
-                            Verificado
-                          </Badge>
-                        )}
-                        {trader.isUserSubmitted && (
-                          <Badge variant="outline" className="border-crypto-green text-crypto-green">
-                            Novo
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">{trader.specialization}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-4 mt-6 text-center">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Win Rate</div>
-                      <div className="font-bold">{trader.winRate}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Lucro 30d</div>
-                      <div className={`font-bold ${trader.positive ? 'text-crypto-green' : 'text-crypto-red'}`}>
-                        {trader.profit30d}
+                  <div className="animate-pulse space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-full bg-muted"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 w-20 bg-muted rounded"></div>
+                        <div className="h-3 w-16 bg-muted rounded"></div>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Seguidores</div>
-                      <div className="font-bold">{trader.followers}</div>
+                    <div className="grid grid-cols-3 gap-4 mt-6 text-center">
+                      <div>
+                        <div className="h-3 w-12 mx-auto bg-muted rounded mb-1"></div>
+                        <div className="h-4 w-10 mx-auto bg-muted rounded"></div>
+                      </div>
+                      <div>
+                        <div className="h-3 w-12 mx-auto bg-muted rounded mb-1"></div>
+                        <div className="h-4 w-10 mx-auto bg-muted rounded"></div>
+                      </div>
+                      <div>
+                        <div className="h-3 w-12 mx-auto bg-muted rounded mb-1"></div>
+                        <div className="h-4 w-10 mx-auto bg-muted rounded"></div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="mt-4 text-sm text-muted-foreground">
-                    {trader.description}
-                  </div>
-                  
-                  <div className="flex items-center justify-center mt-6">
-                    <Link to={`/trader/${trader.id}`}>
-                      <Button size="sm">Ver perfil</Button>
-                    </Link>
+                    <div className="h-3 w-full bg-muted rounded"></div>
+                    <div className="h-3 w-3/4 bg-muted rounded"></div>
+                    <div className="flex items-center justify-center mt-6">
+                      <div className="h-8 w-20 bg-muted rounded"></div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <p className="text-muted-foreground">Nenhum trader encontrado com os critérios de busca.</p>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {displayTraders.length > 0 ? (
+              displayTraders.map((trader) => (
+                <Card key={trader.id} className="overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-crypto-blue to-crypto-purple" />
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-16 w-16">
+                        <AvatarImage src={trader.avatar} />
+                        <AvatarFallback className="bg-primary/20 text-primary text-xl">
+                          {trader.name.split(" ").map(n => n[0]).join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-semibold text-lg flex items-center gap-2">
+                          {trader.name}
+                          {trader.verified && (
+                            <Badge variant="outline" className="border-crypto-blue text-crypto-blue">
+                              Verificado
+                            </Badge>
+                          )}
+                          {trader.isUserSubmitted && (
+                            <Badge variant="outline" className="border-crypto-green text-crypto-green">
+                              Novo
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">{trader.specialization}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 mt-6 text-center">
+                      <div>
+                        <div className="text-sm text-muted-foreground">Win Rate</div>
+                        <div className="font-bold">{trader.winRate}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-muted-foreground">Lucro 30d</div>
+                        <div className={`font-bold ${trader.positive ? 'text-crypto-green' : 'text-crypto-red'}`}>
+                          {trader.profit30d}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-muted-foreground">Seguidores</div>
+                        <div className="font-bold">{formatFollowers(trader.followers)}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 text-sm text-muted-foreground">
+                      {trader.description}
+                    </div>
+                    
+                    <div className="flex items-center justify-center mt-6">
+                      <Link to={`/trader/${trader.id}`}>
+                        <Button size="sm">Ver perfil</Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">Nenhum trader encontrado com os critérios de busca.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

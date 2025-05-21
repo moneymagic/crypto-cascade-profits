@@ -1,6 +1,8 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from './supabase';
+import { toast } from "sonner";
 
 // Define the trader data type
 export interface TraderData {
@@ -20,136 +22,175 @@ export interface TraderData {
   apiKey?: string;
   apiSecret?: string;
   lastUpdated?: string;
+  user_id?: string;
 }
-
-// Initial mock data
-const initialTraders: TraderData[] = [
-  {
-    id: "1",
-    name: "Carlos Almeida",
-    avatar: "",
-    winRate: "78%",
-    followers: "1.2K",
-    profit30d: "+32.5%",
-    profit90d: "+87.3%",
-    positive: true,
-    verified: true,
-    specialization: "BTC/ETH",
-    description: "Trader especializado em Bitcoin e Ethereum com mais de 5 anos de experiência.",
-  },
-  {
-    id: "2",
-    name: "Daniela Santos",
-    avatar: "",
-    winRate: "67%",
-    followers: "856",
-    profit30d: "+18.3%",
-    profit90d: "+52.8%",
-    positive: true,
-    verified: true,
-    specialization: "Altcoins",
-    description: "Foco em altcoins com potencial de crescimento e análise fundamentalista.",
-  },
-  {
-    id: "3",
-    name: "Fernando Costa",
-    avatar: "",
-    winRate: "72%",
-    followers: "943",
-    profit30d: "+24.7%",
-    profit90d: "+61.5%",
-    positive: true,
-    verified: false,
-    specialization: "NFT Tokens",
-    description: "Especialista em tokens relacionados ao mercado de NFT e metaverso.",
-  },
-  {
-    id: "4",
-    name: "Márcia Oliveira",
-    avatar: "",
-    winRate: "81%",
-    followers: "2.5K",
-    profit30d: "+41.2%",
-    profit90d: "+105.7%",
-    positive: true,
-    verified: true,
-    specialization: "DeFi",
-    description: "Estratégias em DeFi, yield farming e staking com resultados consistentes.",
-  },
-  {
-    id: "5",
-    name: "Roberto Mendes",
-    avatar: "",
-    winRate: "64%",
-    followers: "721",
-    profit30d: "+15.8%",
-    profit90d: "+37.2%",
-    positive: true,
-    verified: false,
-    specialization: "Swing Trading",
-    description: "Trader de swing trading com base em análise técnica e indicadores.",
-  },
-  {
-    id: "6",
-    name: "Ana Clara Silva",
-    avatar: "",
-    winRate: "75%",
-    followers: "1.1K",
-    profit30d: "+28.2%",
-    profit90d: "+71.9%",
-    positive: true,
-    verified: true,
-    specialization: "Scalping",
-    description: "Especialista em scalping com operações de curta duração e alto volume.",
-  }
-];
 
 // Define the trader store type
 interface TraderStore {
   traders: TraderData[];
-  addTrader: (trader: TraderData) => void;
-  removeTrader: (id: string) => void;
-  updateTraderMetrics: (id: string, metrics: Partial<TraderData>) => void;
+  loading: boolean;
+  error: string | null;
+  fetchTraders: () => Promise<void>;
+  addTrader: (trader: TraderData) => Promise<void>;
+  removeTrader: (id: string) => Promise<void>;
+  updateTraderMetrics: (id: string, metrics: Partial<TraderData>) => Promise<void>;
 }
 
 // Create the trader store with persistence
 export const useTraderStore = create<TraderStore>()(
   persist(
-    (set) => ({
-      traders: initialTraders,
-      addTrader: (trader: TraderData) => 
-        set((state) => ({
-          traders: [...state.traders, trader]
-        })),
-      removeTrader: (id: string) => 
-        set((state) => ({
-          traders: state.traders.filter(trader => trader.id !== id)
-        })),
-      updateTraderMetrics: (id: string, metrics: Partial<TraderData>) =>
-        set((state) => ({
-          traders: state.traders.map(trader => 
-            trader.id === id 
-              ? { ...trader, ...metrics, lastUpdated: new Date().toISOString() } 
-              : trader
-          )
-        }))
+    (set, get) => ({
+      traders: [],
+      loading: false,
+      error: null,
+      
+      fetchTraders: async () => {
+        try {
+          set({ loading: true, error: null });
+          
+          // Buscar traders do banco de dados
+          const { data, error } = await supabase
+            .from('traders')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+          if (error) throw error;
+          
+          // Mapear para o formato usado pela aplicação
+          const mappedTraders: TraderData[] = data.map(trader => ({
+            id: trader.id,
+            name: trader.name,
+            avatar: trader.avatar_url || '',
+            winRate: trader.win_rate,
+            followers: trader.followers,
+            profit30d: trader.profit_30d,
+            profit90d: trader.profit_90d,
+            positive: trader.positive,
+            verified: trader.verified,
+            specialization: trader.specialization,
+            description: trader.description,
+            isUserSubmitted: !!trader.user_id,
+            dateCreated: trader.created_at,
+            apiKey: trader.api_key || undefined,
+            apiSecret: trader.api_secret || undefined,
+            lastUpdated: trader.updated_at || trader.created_at,
+            user_id: trader.user_id
+          }));
+          
+          set({ traders: mappedTraders, loading: false });
+        } catch (error) {
+          console.error("Erro ao buscar traders:", error);
+          set({ error: "Falha ao carregar traders", loading: false });
+        }
+      },
+      
+      addTrader: async (trader: TraderData) => {
+        try {
+          set({ loading: true, error: null });
+          
+          // Inserir no banco de dados
+          const { data, error } = await supabase
+            .from('traders')
+            .insert({
+              id: trader.id,
+              name: trader.name,
+              avatar_url: trader.avatar || null,
+              win_rate: trader.winRate,
+              followers: trader.followers,
+              profit_30d: trader.profit30d,
+              profit_90d: trader.profit90d,
+              positive: trader.positive,
+              verified: trader.verified,
+              specialization: trader.specialization,
+              description: trader.description,
+              user_id: trader.user_id || null,
+              api_key: trader.apiKey || null,
+              api_secret: trader.apiSecret || null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select();
+            
+          if (error) throw error;
+          
+          // Adicionar ao estado local
+          set(state => ({
+            traders: [...state.traders, trader],
+            loading: false
+          }));
+          
+          toast.success("Trader adicionado com sucesso");
+        } catch (error) {
+          console.error("Erro ao adicionar trader:", error);
+          set({ error: "Falha ao adicionar trader", loading: false });
+          toast.error("Erro ao adicionar trader");
+        }
+      },
+      
+      removeTrader: async (id: string) => {
+        try {
+          set({ loading: true, error: null });
+          
+          // Remover do banco de dados
+          const { error } = await supabase
+            .from('traders')
+            .delete()
+            .eq('id', id);
+            
+          if (error) throw error;
+          
+          // Remover do estado local
+          set(state => ({
+            traders: state.traders.filter(trader => trader.id !== id),
+            loading: false
+          }));
+          
+          toast.success("Trader removido com sucesso");
+        } catch (error) {
+          console.error("Erro ao remover trader:", error);
+          set({ error: "Falha ao remover trader", loading: false });
+          toast.error("Erro ao remover trader");
+        }
+      },
+      
+      updateTraderMetrics: async (id: string, metrics: Partial<TraderData>) => {
+        try {
+          set({ loading: true, error: null });
+          
+          // Atualizar no banco de dados
+          const { error } = await supabase
+            .from('traders')
+            .update({
+              win_rate: metrics.winRate,
+              profit_30d: metrics.profit30d,
+              profit_90d: metrics.profit90d,
+              positive: metrics.positive,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+            
+          if (error) throw error;
+          
+          // Atualizar no estado local
+          set(state => ({
+            traders: state.traders.map(trader => 
+              trader.id === id 
+                ? { ...trader, ...metrics, lastUpdated: new Date().toISOString() } 
+                : trader
+            ),
+            loading: false
+          }));
+        } catch (error) {
+          console.error("Erro ao atualizar métricas do trader:", error);
+          set({ error: "Falha ao atualizar métricas", loading: false });
+        }
+      }
     }),
     {
       name: 'trader-storage',
-      // Only keep user-submitted traders in storage
       partialize: (state) => ({
-        traders: state.traders.filter(t => t.isUserSubmitted)
+        traders: [] // Não persistir traders no localStorage, buscar sempre do Supabase
       }),
-      // Merge back with initial traders on load
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          const userTraders = state.traders || [];
-          state.traders = [
-            ...initialTraders,
-            ...userTraders
-          ];
-        }
-      }
     }
   )
 );
@@ -160,11 +201,11 @@ export const generateTraderId = (): string => {
 };
 
 // Helper to convert profile data to trader data
-export const masterTraderProfileToTraderData = (profile: any): TraderData => {
+export const masterTraderProfileToTraderData = (profile: any, userId: string): TraderData => {
   return {
     id: generateTraderId(),
     name: profile.name || "Trader",
-    avatar: profile.photoUrl || "",
+    avatar: profile.photo ? URL.createObjectURL(profile.photo) : "",
     winRate: "0%", // Será calculado com base nos dados da API
     followers: "0",
     profit30d: "+0%", // Será calculado com base nos dados da API
@@ -177,7 +218,8 @@ export const masterTraderProfileToTraderData = (profile: any): TraderData => {
     dateCreated: new Date().toISOString(),
     apiKey: profile.apiKey,
     apiSecret: profile.apiSecret,
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
+    user_id: userId
   };
 };
 

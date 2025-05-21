@@ -11,6 +11,10 @@ import { toast } from "sonner";
 import { FileText, Upload, Key } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { generateTraderId } from "@/lib/traderStore";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -38,8 +42,11 @@ interface MasterTraderFormProps {
   onSubmit?: (data: FormValues) => void;
 }
 
-const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
+const MasterTraderForm = ({ onSubmit: externalOnSubmit }: MasterTraderFormProps) => {
   const [photoPreview, setPhotoPreview] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,13 +72,80 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
     }
   };
 
-  const handleSubmit = (data: FormValues) => {
-    console.log("Form data:", data);
+  const handleSubmit = async (data: FormValues) => {
+    if (!user) {
+      toast.error("Você precisa estar logado para cadastrar-se como Master Trader");
+      return;
+    }
     
-    if (onSubmit) {
-      onSubmit(data);
-    } else {
-      toast.success("Cadastro enviado com sucesso!");
+    try {
+      setLoading(true);
+      
+      // Se houver um manipulador externo, use-o
+      if (externalOnSubmit) {
+        externalOnSubmit(data);
+        return;
+      }
+      
+      // Gerar ID único para o trader
+      const traderId = generateTraderId();
+      
+      // Upload da foto se existir
+      let avatarUrl = null;
+      if (data.photo) {
+        const fileExt = data.photo.name.split('.').pop();
+        const fileName = `${traderId}.${fileExt}`;
+        const filePath = `trader-avatars/${fileName}`;
+        
+        const { error: uploadError } = await supabase
+          .storage
+          .from('avatars')
+          .upload(filePath, data.photo);
+          
+        if (uploadError) throw uploadError;
+        
+        // Obter URL pública da imagem
+        const { data: { publicUrl } } = supabase
+          .storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+          
+        avatarUrl = publicUrl;
+      }
+      
+      // Inserir dados do trader no banco
+      const { error } = await supabase
+        .from('traders')
+        .insert({
+          id: traderId,
+          name: data.name,
+          avatar_url: avatarUrl,
+          win_rate: "0%",
+          followers: "0",
+          profit_30d: "+0%",
+          profit_90d: "+0%",
+          positive: true,
+          verified: false,
+          specialization: data.strategyName,
+          description: data.bio,
+          user_id: user.id,
+          api_key: data.apiKey,
+          api_secret: data.apiSecret,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        
+      if (error) throw error;
+      
+      // Exibir mensagem de sucesso e redirecionar
+      toast.success("Cadastro como Master Trader realizado com sucesso!");
+      navigate('/traders');
+      
+    } catch (error: any) {
+      console.error("Erro ao cadastrar master trader:", error);
+      toast.error(error.message || "Erro ao processar cadastro");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,6 +171,7 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                   placeholder="Seu nome completo" 
                   {...field} 
                   className="max-w-md"
+                  disabled={loading}
                 />
               </FormControl>
               <FormDescription>
@@ -118,6 +193,7 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                   placeholder="Ex: Scalping BTC/ETH" 
                   {...field} 
                   className="max-w-md"
+                  disabled={loading}
                 />
               </FormControl>
               <FormDescription>
@@ -142,6 +218,7 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                       placeholder="Sua chave de API da Bybit" 
                       className="pl-10" 
                       {...field} 
+                      disabled={loading}
                     />
                   </div>
                 </FormControl>
@@ -167,6 +244,7 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                       className="pl-10" 
                       type="password" 
                       {...field} 
+                      disabled={loading}
                     />
                   </div>
                 </FormControl>
@@ -192,6 +270,7 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                     placeholder="Descreva sua experiência, estratégia e resultados anteriores..." 
                     className="min-h-[120px] pl-10 pt-8" 
                     {...field} 
+                    disabled={loading}
                   />
                 </div>
               </FormControl>
@@ -224,6 +303,7 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                 id="photo"
                 onChange={handlePhotoChange}
                 className="max-w-md"
+                disabled={loading}
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Formatos suportados: JPG, PNG. Máximo 2MB.
@@ -243,6 +323,7 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
                   placeholder="Informações adicionais sobre sua estratégia, horários de operação, etc..." 
                   className="min-h-[100px]" 
                   {...field} 
+                  disabled={loading}
                 />
               </FormControl>
               <FormMessage />
@@ -251,8 +332,8 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
         />
 
         <div className="flex justify-end">
-          <Button type="submit" size="lg">
-            Cadastrar como Master Trader
+          <Button type="submit" size="lg" disabled={loading}>
+            {loading ? "Processando..." : "Cadastrar como Master Trader"}
           </Button>
         </div>
       </form>
