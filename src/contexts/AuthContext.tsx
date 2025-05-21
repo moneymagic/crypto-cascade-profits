@@ -42,11 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               throw error;
             }
 
-            console.log("Perfil carregado:", profile);
+            console.log("Perfil carregado após evento de login:", profile);
             setUser(profile);
             setLoading(false);
+            
+            // Redirecionar após login bem-sucedido
+            navigate("/traders");
           } catch (error) {
-            console.error("Erro ao carregar perfil:", error);
+            console.error("Erro ao carregar perfil após evento:", error);
             setLoading(false);
           }
         } else if (event === "SIGNED_OUT") {
@@ -64,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authListener.subscription.unsubscribe();
       }
     };
-  }, []);
+  }, [navigate]);
 
   async function checkUser() {
     try {
@@ -73,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Verificar se já existe sessão
       const { data: { session } } = await supabase.auth.getSession();
       
-      console.log("Verificando sessão:", session?.user?.id);
+      console.log("Verificando sessão inicial:", session?.user?.id);
       
       if (session) {
         // Buscar dados do perfil
@@ -90,8 +93,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         console.log("Perfil carregado na inicialização:", profile);
         setUser(profile);
+        
+        // Se o usuário está autenticado e estamos na página de login, redirecionar
+        if (window.location.pathname === "/login") {
+          navigate("/traders");
+        }
       } else {
         console.log("Nenhuma sessão ativa encontrada");
+        // Redirecionar para login se estiver em uma rota protegida
+        const currentPath = window.location.pathname;
+        if (currentPath !== "/login" && currentPath !== "/register" && currentPath !== "/") {
+          navigate("/login");
+        }
       }
     } catch (error) {
       console.error("Erro ao verificar usuário:", error);
@@ -108,7 +121,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro retornado pelo supabase.auth.signInWithPassword:", error);
+        throw error;
+      }
       
       // Verificar se o login foi bem-sucedido
       if (data.user) {
@@ -138,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Falha ao fazer login. Tente novamente.");
       }
     } catch (error: any) {
-      console.error("Erro de login:", error);
+      console.error("Erro completo de login:", error);
       toast.error("Erro ao fazer login", {
         description: error.message || "Verifique suas credenciais e tente novamente"
       });

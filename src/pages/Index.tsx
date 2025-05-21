@@ -14,7 +14,10 @@ const Index = () => {
     // Se o usuário não estiver autenticado e não estiver carregando,
     // redirecione para a página de login
     if (!user && !loading) {
+      console.log("Index: Usuário não autenticado, redirecionando para /login");
       navigate("/login");
+    } else if (user) {
+      console.log("Index: Usuário autenticado, permanecendo na página");
     }
   }, [user, loading, navigate]);
 
@@ -31,8 +34,12 @@ const Index = () => {
   }
   
   // Se não estiver autenticado, não renderiza o conteúdo
-  if (!user) return null;
+  if (!user) {
+    console.log("Index: Renderização interrompida - usuário não autenticado");
+    return null;
+  }
 
+  console.log("Index: Renderizando dashboard para usuário autenticado");
   return (
     <DashboardLayout>
       <div className="space-y-6">

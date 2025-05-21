@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { VastCopyLogo } from "@/components/logo/VastCopyLogo";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -27,6 +28,7 @@ const Login = () => {
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
   const [emailForResend, setEmailForResend] = useState("");
   const [loginError, setLoginError] = useState("");
+  const navigate = useNavigate();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -43,7 +45,14 @@ const Login = () => {
       setLoginError("");
       
       console.log("Iniciando processo de login...");
+      console.log("Tentando fazer login com:", data.email);
+      
       await signIn(data.email, data.password);
+      
+      // Se chegou aqui, o login foi bem-sucedido e já deve ter redirecionado
+      // Mas vamos adicionar um redirecionamento explícito aqui por segurança
+      navigate("/traders");
+      
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);
       
@@ -168,7 +177,14 @@ const Login = () => {
                 />
                 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Entrando..." : "Entrar"}
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Entrando...
+                    </>
+                  ) : (
+                    "Entrar"
+                  )}
                 </Button>
               </form>
             </Form>
