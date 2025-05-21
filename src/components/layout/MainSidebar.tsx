@@ -9,7 +9,6 @@ import {
   BarChart, 
   Settings,
   Wallet,
-  UserPlus,
   WifiHigh
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,7 +23,6 @@ export function MainSidebar() {
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: Users, label: "Traders", path: "/traders" },
-    { icon: UserPlus, label: "Torne-se Master Trader", path: "/master-trader-signup" },
     { icon: PieChart, label: "Portfolio", path: "/portfolio" },
     { icon: Copy, label: "Copy Trading", path: "/copy-trading" },
     { icon: WifiHigh, label: "Network", path: "/network" },

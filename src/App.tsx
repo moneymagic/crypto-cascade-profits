@@ -12,7 +12,6 @@ import Earnings from "./pages/Earnings";
 import Wallet from "./pages/Wallet";
 import Settings from "./pages/Settings";
 import Network from "./pages/Network";
-import MasterTraderSignup from "./pages/MasterTraderSignup";
 import TraderProfile from "./pages/TraderProfile";
 import NotFound from "./pages/NotFound";
 
@@ -35,7 +34,7 @@ const App = () => (
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/master-trader-signup" element={<MasterTraderSignup />} />
+          <Route path="/master-trader-signup" element={<Navigate to="/settings?tab=mastertrader" replace />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

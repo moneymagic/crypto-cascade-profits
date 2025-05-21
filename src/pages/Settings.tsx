@@ -1,14 +1,15 @@
 
 import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Key, Lock } from "lucide-react";
+import { Shield, Key, Lock, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
+import MasterTraderForm from "@/components/settings/MasterTraderForm";
 
 const Settings = () => {
   const [apiKey, setApiKey] = useState('');
@@ -92,6 +93,10 @@ const Settings = () => {
             <TabsTrigger value="api">
               <Key className="mr-2 h-4 w-4" />
               Configuração de API
+            </TabsTrigger>
+            <TabsTrigger value="mastertrader">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Master Trader
             </TabsTrigger>
           </TabsList>
           
@@ -244,6 +249,25 @@ const Settings = () => {
                     <li>Nunca compartilhe suas chaves com terceiros</li>
                   </ul>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="mastertrader">
+            <Card>
+              <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
+                <CardTitle>
+                  <div className="flex items-center">
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Torne-se um Master Trader
+                  </div>
+                </CardTitle>
+                <CardDescription className="text-gray-200">
+                  Preencha o formulário abaixo para se tornar um master trader na plataforma VastCopy.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <MasterTraderForm />
               </CardContent>
             </Card>
           </TabsContent>
