@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import type { Profile } from './supabase';
 import { Database } from './database.types';
@@ -200,4 +199,70 @@ export async function getReferralStats(userId: string) {
   const activeReferrals = data.filter(ref => ref.status === 'active').length;
   
   return { total: totalReferrals, active: activeReferrals };
+}
+
+// Funções para gerenciar chaves de API
+export async function saveApiKey(userId: string, exchange: string, apiKey: string, apiSecret: string, isTestnet: boolean) {
+  // Verificar se já existe uma chave para esse usuário e exchange
+  const { data: existingKeys } = await supabase
+    .from('api_keys')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('exchange', exchange);
+
+  if (existingKeys && existingKeys.length > 0) {
+    // Atualizar chave existente
+    const { data, error } = await supabase
+      .from('api_keys')
+      .update({
+        api_key: apiKey,
+        api_secret: apiSecret,
+        is_testnet: isTestnet,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existingKeys[0].id);
+    
+    if (error) throw error;
+    return data;
+  } else {
+    // Inserir nova chave
+    const { data, error } = await supabase
+      .from('api_keys')
+      .insert({
+        user_id: userId,
+        exchange,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        is_testnet: isTestnet
+      });
+    
+    if (error) throw error;
+    return data;
+  }
+}
+
+export async function getApiKeys(userId: string, exchange?: string) {
+  const query = supabase
+    .from('api_keys')
+    .select('*')
+    .eq('user_id', userId);
+  
+  if (exchange) {
+    query.eq('exchange', exchange);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteApiKey(id: string) {
+  const { data, error } = await supabase
+    .from('api_keys')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+  return data;
 }

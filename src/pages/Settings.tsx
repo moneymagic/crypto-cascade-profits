@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Key, Lock, UserPlus, Wallet, BarChart, LogOut } from "lucide-react";
+import { Shield, Key, Lock, UserPlus, Wallet, BarChart, LogOut, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import MasterTraderForm from "@/components/settings/MasterTraderForm";
@@ -17,6 +17,7 @@ import {
   calculateTraderMetrics 
 } from "@/lib/traderStore";
 import { useAuth } from "@/contexts/AuthContext";
+import { saveApiKey, getApiKeys } from "@/lib/database";
 
 const Settings = () => {
   const [apiKey, setApiKey] = useState('');
@@ -28,11 +29,12 @@ const Settings = () => {
   const [isMasterTrader, setIsMasterTrader] = useState(false);
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('security');
+  const [isLoading, setIsLoading] = useState(false);
   
   // Get trader store actions
   const addTrader = useTraderStore(state => state.addTrader);
   const updateTraderMetrics = useTraderStore(state => state.updateTraderMetrics);
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     // Check for tab param in URL
@@ -41,8 +43,7 @@ const Settings = () => {
       setActiveTab(tabParam);
     }
 
-    // For demonstration purposes, check if user is a master trader
-    // In a real app, this would come from an API or auth state
+    // Para demonstração, verificar se o usuário é um master trader
     const checkMasterTraderStatus = () => {
       // Mock implementation - this would check with your backend
       const mockUserData = localStorage.getItem('user_data');
@@ -57,22 +58,59 @@ const Settings = () => {
     };
     
     checkMasterTraderStatus();
-  }, [searchParams]);
+    
+    // Carregar chaves de API salvas no banco
+    const loadApiKeys = async () => {
+      if (user?.id) {
+        try {
+          const keys = await getApiKeys(user.id, 'bybit');
+          if (keys && keys.length > 0) {
+            setApiKey(keys[0].api_key);
+            setApiSecret(keys[0].api_secret);
+            setIsTestnet(keys[0].is_testnet);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar chaves de API:", error);
+        }
+      }
+    };
+    
+    loadApiKeys();
+  }, [searchParams, user?.id]);
 
-  const handleApiSave = () => {
+  const handleApiSave = async () => {
     if (!apiKey || !apiSecret) {
       toast.error("API Key e Secret são obrigatórios");
       return;
     }
 
-    // Save credentials to localStorage (for demo purposes)
-    localStorage.setItem("bybit_apiKey", apiKey);
-    localStorage.setItem("bybit_apiSecret", apiSecret);
-    localStorage.setItem("bybit_testnet", String(isTestnet));
+    if (!user?.id) {
+      toast.error("Você precisa estar logado para salvar a API");
+      return;
+    }
     
-    toast.success("Configurações Salvas", {
-      description: "Suas configurações de API foram salvas com sucesso."
-    });
+    setIsLoading(true);
+    
+    try {
+      // Salvar no Supabase
+      await saveApiKey(user.id, 'bybit', apiKey, apiSecret, isTestnet);
+      
+      // Também salvar no localStorage para compatibilidade
+      localStorage.setItem("bybit_apiKey", apiKey);
+      localStorage.setItem("bybit_apiSecret", apiSecret);
+      localStorage.setItem("bybit_testnet", String(isTestnet));
+      
+      toast.success("Configurações Salvas", {
+        description: "Suas configurações de API foram salvas com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao salvar chaves de API:", error);
+      toast.error("Erro ao Salvar", {
+        description: "Ocorreu um erro ao tentar salvar suas chaves de API."
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePasswordChange = () => {
@@ -355,8 +393,16 @@ const Settings = () => {
                 <Button 
                   onClick={handleApiSave}
                   className="w-full"
+                  disabled={isLoading}
                 >
-                  Salvar Configurações de API
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    'Salvar Configurações de API'
+                  )}
                 </Button>
                 
                 <div className="text-sm text-muted-foreground mt-4">
@@ -365,6 +411,7 @@ const Settings = () => {
                     <li>Use apenas chaves de API com permissões limitadas</li>
                     <li>Crie chaves dedicadas para VastCopy</li>
                     <li>Nunca compartilhe suas chaves com terceiros</li>
+                    <li>Suas chaves são armazenadas de forma segura em nosso banco de dados</li>
                   </ul>
                 </div>
               </CardContent>

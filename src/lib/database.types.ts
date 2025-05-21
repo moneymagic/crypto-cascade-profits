@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -322,6 +321,38 @@ export interface Database {
           target?: string
           earned?: string
           required_referrals?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      api_keys: {
+        Row: {
+          id: string
+          user_id: string
+          exchange: string
+          api_key: string
+          api_secret: string
+          is_testnet: boolean
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          exchange: string
+          api_key: string
+          api_secret: string
+          is_testnet?: boolean
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          exchange?: string
+          api_key?: string
+          api_secret?: string
+          is_testnet?: boolean
           created_at?: string
           updated_at?: string | null
         }
