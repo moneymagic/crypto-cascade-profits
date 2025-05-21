@@ -26,15 +26,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Configurar listener para mudanças na autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
+        
         if (event === "SIGNED_IN" && session) {
           // Usuário logou, buscar perfil
           try {
-            const { data: profile } = await supabase
+            const { data: profile, error } = await supabase
               .from("profiles")
               .select("*")
               .eq("id", session.user.id)
               .single();
 
+            if (error) {
+              console.error("Erro ao buscar perfil:", error);
+              throw error;
+            }
+
+            console.log("Perfil carregado:", profile);
             setUser(profile);
             setLoading(false);
           } catch (error) {
@@ -43,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else if (event === "SIGNED_OUT") {
           // Usuário deslogou, limpar estado
+          console.log("Usuário deslogado");
           setUser(null);
           setLoading(false);
         }
@@ -64,15 +73,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Verificar se já existe sessão
       const { data: { session } } = await supabase.auth.getSession();
       
+      console.log("Verificando sessão:", session?.user?.id);
+      
       if (session) {
         // Buscar dados do perfil
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
           .single();
         
+        if (error) {
+          console.error("Erro ao buscar perfil na inicialização:", error);
+          throw error;
+        }
+        
+        console.log("Perfil carregado na inicialização:", profile);
         setUser(profile);
+      } else {
+        console.log("Nenhuma sessão ativa encontrada");
       }
     } catch (error) {
       console.error("Erro ao verificar usuário:", error);
@@ -83,15 +102,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signIn(email: string, password: string) {
     try {
+      console.log("Tentando fazer login com:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) throw error;
-
-      toast.success("Login realizado com sucesso!");
-      navigate("/traders");
+      
+      // Verificar se o login foi bem-sucedido
+      if (data.user) {
+        console.log("Login bem-sucedido, obtendo perfil para:", data.user.id);
+        
+        // Buscar dados do perfil
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", data.user.id)
+          .single();
+          
+        if (profileError) {
+          console.error("Erro ao buscar perfil após login:", profileError);
+          throw profileError;
+        }
+        
+        // Atualizar estado com o perfil obtido
+        console.log("Perfil obtido após login:", profile);
+        setUser(profile);
+        
+        // Redirecionar e mostrar mensagem
+        toast.success("Login realizado com sucesso!");
+        navigate("/traders");
+      } else {
+        console.error("Login falhou: dados do usuário não encontrados");
+        throw new Error("Falha ao fazer login. Tente novamente.");
+      }
     } catch (error: any) {
       console.error("Erro de login:", error);
       toast.error("Erro ao fazer login", {

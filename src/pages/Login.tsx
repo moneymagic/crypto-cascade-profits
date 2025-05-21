@@ -26,6 +26,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
   const [emailForResend, setEmailForResend] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -39,12 +40,18 @@ const Login = () => {
     try {
       setLoading(true);
       setEmailNotConfirmed(false);
+      setLoginError("");
+      
+      console.log("Iniciando processo de login...");
       await signIn(data.email, data.password);
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);
+      
       if (error.code === "email_not_confirmed") {
         setEmailNotConfirmed(true);
         setEmailForResend(data.email);
+      } else {
+        setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
       }
     } finally {
       setLoading(false);
@@ -108,6 +115,14 @@ const Login = () => {
                       Reenviar e-mail de confirmação
                     </Button>
                   </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {loginError && (
+              <Alert className="mb-6 bg-red-50 border-red-200">
+                <AlertDescription className="text-red-800">
+                  {loginError}
                 </AlertDescription>
               </Alert>
             )}
