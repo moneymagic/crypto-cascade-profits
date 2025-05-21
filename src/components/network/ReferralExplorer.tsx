@@ -24,6 +24,11 @@ interface ReferralLevel {
   users: ReferralUser[];
 }
 
+// Define the missing ReferralExplorerProps interface
+interface ReferralExplorerProps {
+  userId?: string;
+}
+
 // Sample data - in a real app, this would come from an API
 const mockReferralData: Record<string, ReferralUser[]> = {
   "root": [
