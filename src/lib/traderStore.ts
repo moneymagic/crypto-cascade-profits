@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from './supabase';
@@ -237,7 +236,6 @@ export const masterTraderProfileToTraderData = (profile: any): TraderData => {
     apiKey: profile.apiKey,
     apiSecret: profile.apiSecret,
     lastUpdated: new Date().toISOString(),
-    // Corrigindo o erro: obtendo o ID do usuário de forma assíncrona
     user_id: undefined // Vamos definir isso após obter o ID do usuário
   };
 };
