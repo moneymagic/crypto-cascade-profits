@@ -28,15 +28,11 @@ interface ApiKeyData {
   is_testnet: boolean;
 }
 
-// Interface para o api_keys dentro do followers
+// Interface para estrutura retornada pela consulta do Supabase
 interface FollowerWithApiKeys {
   user_id: string;
   allocation_percent: number;
-  api_keys: {
-    api_key: string;
-    api_secret: string;
-    is_testnet: boolean;
-  };
+  api_keys: ApiKeyData; // Corrigido: api_keys é um objeto, não um array
 }
 
 class CopyTradingService {
@@ -183,8 +179,8 @@ class CopyTradingService {
         return;
       }
       
-      // Formatar seguidores com suas informações - correção para o tipo de dados
-      const formattedFollowers: FollowerInfo[] = followers.map((f: FollowerWithApiKeys) => ({
+      // Formatar seguidores com suas informações - correção para o tipo de dados correto
+      const formattedFollowers: FollowerInfo[] = followers.map((f: any) => ({
         user_id: f.user_id,
         allocation_percent: f.allocation_percent,
         api_key: f.api_keys.api_key,
@@ -353,7 +349,7 @@ class CopyTradingService {
       
       toast.error(
         `Erro na replicação`,
-        { description: (error as Error).message || "Falha ao replicar ordem" }
+        { description: (error as Error).message || "Falha ao replicar ordem para o seguidor" }
       );
     }
   }
