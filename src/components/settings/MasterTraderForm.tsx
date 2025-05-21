@@ -29,7 +29,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const MasterTraderForm = () => {
+interface MasterTraderFormProps {
+  onSubmit?: (data: FormValues) => void;
+}
+
+const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
   const [photoPreview, setPhotoPreview] = React.useState<string | null>(null);
   
   const form = useForm<FormValues>({
@@ -55,15 +59,21 @@ const MasterTraderForm = () => {
     }
   };
 
-  const onSubmit = (data: FormValues) => {
+  const handleSubmit = (data: FormValues) => {
     console.log("Form data:", data);
-    toast.success("Cadastro enviado com sucesso!");
+    
+    if (onSubmit) {
+      onSubmit(data);
+    } else {
+      toast.success("Cadastro enviado com sucesso!");
+    }
+    
     // Here you would typically send the data to your backend
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="strategyName"

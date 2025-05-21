@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Key, Lock, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { Shield, Key, Lock, UserPlus, Wallet, BarChart } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import MasterTraderForm from "@/components/settings/MasterTraderForm";
+import MasterTraderDashboard from "@/components/settings/MasterTraderDashboard";
+import { useSearchParams } from "react-router-dom";
 
 const Settings = () => {
   const [apiKey, setApiKey] = useState('');
@@ -18,6 +20,34 @@ const Settings = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
+  const [isMasterTrader, setIsMasterTrader] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState('security');
+
+  useEffect(() => {
+    // Check for tab param in URL
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['security', 'api', 'mastertrader'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
+    // For demonstration purposes, check if user is a master trader
+    // In a real app, this would come from an API or auth state
+    const checkMasterTraderStatus = () => {
+      // Mock implementation - this would check with your backend
+      const mockUserData = localStorage.getItem('user_data');
+      if (mockUserData) {
+        try {
+          const userData = JSON.parse(mockUserData);
+          setIsMasterTrader(userData.isMasterTrader || false);
+        } catch (e) {
+          console.error("Error parsing user data", e);
+        }
+      }
+    };
+    
+    checkMasterTraderStatus();
+  }, [searchParams]);
 
   const handleApiSave = () => {
     if (!apiKey || !apiSecret) {
@@ -79,12 +109,30 @@ const Settings = () => {
     setConfirmPassword('');
   };
 
+  // Mock submit for master trader form - in real app, this would send data to backend
+  const handleMasterTraderSubmit = (data) => {
+    console.log("Submitted master trader application:", data);
+    // Simulate successful submission
+    localStorage.setItem('user_data', JSON.stringify({
+      ...JSON.parse(localStorage.getItem('user_data') || '{}'),
+      isMasterTrader: true,
+      masterTraderData: data
+    }));
+    
+    setIsMasterTrader(true);
+    
+    toast({
+      title: "Cadastro Realizado",
+      description: "Seu cadastro como Master Trader foi concluído com sucesso!"
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Configurações</h1>
         
-        <Tabs defaultValue="security">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="security">
               <Shield className="mr-2 h-4 w-4" />
@@ -254,22 +302,28 @@ const Settings = () => {
           </TabsContent>
           
           <TabsContent value="mastertrader">
-            <Card>
-              <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
-                <CardTitle>
-                  <div className="flex items-center">
-                    <UserPlus className="mr-2 h-5 w-5" />
-                    Torne-se um Master Trader
-                  </div>
-                </CardTitle>
-                <CardDescription className="text-gray-200">
-                  Preencha o formulário abaixo para se tornar um master trader na plataforma VastCopy.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <MasterTraderForm />
-              </CardContent>
-            </Card>
+            {isMasterTrader ? (
+              <div className="space-y-6">
+                <MasterTraderDashboard />
+              </div>
+            ) : (
+              <Card>
+                <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
+                  <CardTitle>
+                    <div className="flex items-center">
+                      <UserPlus className="mr-2 h-5 w-5" />
+                      Torne-se um Master Trader
+                    </div>
+                  </CardTitle>
+                  <CardDescription className="text-gray-200">
+                    Preencha o formulário abaixo para se tornar um master trader na plataforma VastCopy.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <MasterTraderForm onSubmit={handleMasterTraderSubmit} />
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
