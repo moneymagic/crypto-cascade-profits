@@ -47,18 +47,50 @@ const Login = () => {
       console.log("Iniciando processo de login...");
       console.log("Tentando fazer login com:", data.email);
       
+      // Primeiro, verificar se o usuário existe
+      const { data: userExists, error: userCheckError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .eq("email", data.email)
+        .single();
+      
+      if (userCheckError) {
+        console.error("Erro ao verificar usuário:", userCheckError);
+        
+        if (userCheckError.code === "PGRST116") {
+          // PGRST116 significa que nenhum registro foi encontrado
+          setLoginError("Usuário não encontrado. Verifique seu e-mail ou crie uma nova conta.");
+          setLoading(false);
+          return;
+        }
+      }
+      
+      if (userExists) {
+        console.log("Usuário encontrado no banco de dados:", userExists.id);
+      } else {
+        console.log("Usuário não encontrado no banco de dados");
+        setLoginError("Usuário não encontrado. Verifique seu e-mail ou crie uma nova conta.");
+        setLoading(false);
+        return;
+      }
+      
+      // Se chegou até aqui, o usuário existe, então tenta fazer login
       await signIn(data.email, data.password);
       
-      // Se chegou aqui, o login foi bem-sucedido e já deve ter redirecionado
-      // Mas vamos adicionar um redirecionamento explícito aqui por segurança
+      // Se chegou aqui, o login foi bem-sucedido
+      toast.success("Login realizado com sucesso!");
       navigate("/traders");
       
     } catch (error: any) {
-      console.error("Erro ao fazer login:", error);
+      console.error("Erro completo ao fazer login:", error);
       
       if (error.code === "email_not_confirmed") {
         setEmailNotConfirmed(true);
         setEmailForResend(data.email);
+      } else if (error.code === "auth/invalid-login-credentials" || error.code === "auth/user-not-found") {
+        setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
+      } else if (error.message && error.message.includes("Invalid login credentials")) {
+        setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
       } else {
         setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
       }

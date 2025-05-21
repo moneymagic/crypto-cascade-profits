@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === "SIGNED_IN" && session) {
           // Usuário logou, buscar perfil
           try {
+            console.log("Buscando perfil após evento SIGNED_IN para usuário:", session.user.id);
             const { data: profile, error } = await supabase
               .from("profiles")
               .select("*")
@@ -38,8 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .single();
 
             if (error) {
-              console.error("Erro ao buscar perfil:", error);
+              console.error("Erro ao buscar perfil após evento:", error);
               throw error;
+            }
+
+            if (!profile) {
+              console.error("Perfil não encontrado após evento de login para ID:", session.user.id);
+              setUser(null);
+              setLoading(false);
+              return;
             }
 
             console.log("Perfil carregado após evento de login:", profile);
@@ -80,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (session) {
         // Buscar dados do perfil
+        console.log("Buscando perfil para usuário com ID:", session.user.id);
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("*")
@@ -91,8 +100,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw error;
         }
         
-        console.log("Perfil carregado na inicialização:", profile);
-        setUser(profile);
+        if (!profile) {
+          console.error("Perfil não encontrado na inicialização para ID:", session.user.id);
+          // Criar um perfil básico para este usuário
+          try {
+            const { error: createError } = await supabase
+              .from("profiles")
+              .insert({
+                id: session.user.id,
+                full_name: session.user.user_metadata?.full_name || "Usuário",
+                email: session.user.email,
+                created_at: new Date().toISOString(),
+                balance: 0,
+              });
+              
+            if (createError) {
+              throw createError;
+            }
+            
+            // Buscar o perfil recém-criado
+            const { data: newProfile, error: fetchError } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", session.user.id)
+              .single();
+              
+            if (fetchError || !newProfile) {
+              throw fetchError || new Error("Falha ao buscar perfil recém-criado");
+            }
+            
+            setUser(newProfile);
+          } catch (createError) {
+            console.error("Erro ao criar perfil:", createError);
+            // Deslogar o usuário se não conseguir criar um perfil
+            await supabase.auth.signOut();
+            setUser(null);
+          }
+        } else {
+          console.log("Perfil carregado na inicialização:", profile);
+          setUser(profile);
+        }
         
         // Se o usuário está autenticado e estamos na página de login, redirecionar
         if (window.location.pathname === "/login") {
@@ -127,32 +174,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Verificar se o login foi bem-sucedido
-      if (data.user) {
-        console.log("Login bem-sucedido, obtendo perfil para:", data.user.id);
-        
-        // Buscar dados do perfil
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", data.user.id)
-          .single();
-          
-        if (profileError) {
-          console.error("Erro ao buscar perfil após login:", profileError);
-          throw profileError;
-        }
-        
-        // Atualizar estado com o perfil obtido
-        console.log("Perfil obtido após login:", profile);
-        setUser(profile);
-        
-        // Redirecionar e mostrar mensagem
-        toast.success("Login realizado com sucesso!");
-        navigate("/traders");
-      } else {
+      if (!data || !data.user) {
         console.error("Login falhou: dados do usuário não encontrados");
         throw new Error("Falha ao fazer login. Tente novamente.");
       }
+      
+      console.log("Login bem-sucedido, obtendo perfil para:", data.user.id);
+      
+      // Buscar dados do perfil
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+        
+      if (profileError) {
+        console.error("Erro ao buscar perfil após login:", profileError);
+        
+        // Se o perfil não foi encontrado, criar um
+        if (profileError.code === "PGRST116") {
+          console.log("Perfil não encontrado, criando perfil para:", data.user.id);
+          
+          const { error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: data.user.id,
+              full_name: data.user.user_metadata?.full_name || "Usuário",
+              email: email,
+              created_at: new Date().toISOString(),
+              balance: 0,
+            });
+            
+          if (createError) {
+            console.error("Erro ao criar perfil:", createError);
+            throw createError;
+          }
+          
+          // Buscar o perfil recém-criado
+          const { data: newProfile, error: fetchError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", data.user.id)
+            .single();
+            
+          if (fetchError) {
+            console.error("Erro ao buscar perfil recém-criado:", fetchError);
+            throw fetchError;
+          }
+          
+          if (!newProfile) {
+            console.error("Perfil recém-criado não encontrado");
+            throw new Error("Perfil recém-criado não encontrado");
+          }
+          
+          console.log("Perfil criado e obtido após login:", newProfile);
+          setUser(newProfile);
+        } else {
+          throw profileError;
+        }
+      } else if (!profile) {
+        console.error("Perfil não encontrado após login bem-sucedido");
+        throw new Error("Perfil não encontrado após login bem-sucedido");
+      } else {
+        // Atualizar estado com o perfil obtido
+        console.log("Perfil obtido após login:", profile);
+        setUser(profile);
+      }
+      
+      // Redirecionar e mostrar mensagem
+      toast.success("Login realizado com sucesso!");
+      navigate("/traders");
     } catch (error: any) {
       console.error("Erro completo de login:", error);
       toast.error("Erro ao fazer login", {
