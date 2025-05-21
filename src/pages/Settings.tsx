@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Key, Lock, UserPlus, Wallet, BarChart } from "lucide-react";
+import { Shield, Key, Lock, UserPlus, Wallet, BarChart, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import MasterTraderForm from "@/components/settings/MasterTraderForm";
@@ -16,6 +16,7 @@ import {
   masterTraderProfileToTraderData, 
   calculateTraderMetrics 
 } from "@/lib/traderStore";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Settings = () => {
   const [apiKey, setApiKey] = useState('');
@@ -31,6 +32,7 @@ const Settings = () => {
   // Get trader store actions
   const addTrader = useTraderStore(state => state.addTrader);
   const updateTraderMetrics = useTraderStore(state => state.updateTraderMetrics);
+  const { signOut } = useAuth();
 
   useEffect(() => {
     // Check for tab param in URL
@@ -174,10 +176,31 @@ const Settings = () => {
     });
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Logout realizado com sucesso");
+    } catch (error) {
+      toast.error("Erro ao fazer logout", {
+        description: "Ocorreu um problema ao tentar sair da sua conta."
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Configurações</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Configurações</h1>
+          <Button 
+            variant="destructive" 
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut size={16} />
+            Sair da conta
+          </Button>
+        </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
