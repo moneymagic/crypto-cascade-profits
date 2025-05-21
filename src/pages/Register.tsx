@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { VastCopyLogo } from "@/components/logo/VastCopyLogo";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
@@ -26,24 +29,30 @@ type FormValues = z.infer<typeof formSchema>;
 const Register = () => {
   const { signUp } = useAuth();
   const [loading, setLoading] = useState(false);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
+  const [registrationError, setRegistrationError] = useState("");
+  const navigate = useNavigate();
 
   async function onSubmit(data: FormValues) {
     try {
       setLoading(true);
+      setRegistrationError("");
+      console.log("Iniciando processo de cadastro para:", data.email);
+      
       await signUp(data.email, data.password, data.fullName);
-    } catch (error) {
+      console.log("Cadastro realizado com sucesso, redirecionando para login");
+      
+      // Redirecionar para login após sucesso
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (error: any) {
       console.error("Erro ao cadastrar:", error);
-    } finally {
+      
+      if (error.message?.includes("already registered")) {
+        setRegistrationError("Este e-mail já está cadastrado. Por favor, use outro e-mail ou faça login.");
+      } else {
+        setRegistrationError(error.message || "Erro ao criar conta. Por favor, tente novamente.");
+      }
       setLoading(false);
     }
   }
@@ -65,6 +74,14 @@ const Register = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {registrationError && (
+              <Alert className="mb-6 bg-red-50 border-red-200">
+                <AlertDescription className="text-red-800">
+                  {registrationError}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -143,7 +160,14 @@ const Register = () => {
                 />
                 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Criando conta..." : "Criar conta"}
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    "Criar conta"
+                  )}
                 </Button>
               </form>
             </Form>

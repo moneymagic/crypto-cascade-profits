@@ -45,138 +45,52 @@ const Login = () => {
       setLoginError("");
       
       console.log("Iniciando processo de login...");
-      console.log("Tentando fazer login com:", data.email);
       
-      // Verificar se o e-mail existe no Supabase Auth
-      console.log("Verificando se o e-mail existe...");
-      const { data: existingUsers, error: existingError } = await supabase
+      // Verificar se o e-mail existe
+      const { data: existingUser, error: existingError } = await supabase
         .from("profiles")
         .select("email")
         .eq("email", data.email)
         .maybeSingle();
-        
+      
       if (existingError) {
-        console.error("Erro ao verificar e-mail:", existingError);
+        console.error("Erro ao verificar existência de e-mail:", existingError);
       }
       
-      if (!existingUsers) {
-        console.log("E-mail não encontrado no sistema:", data.email);
+      if (!existingUser) {
+        console.log("E-mail não encontrado:", data.email);
         setLoginError("E-mail não cadastrado. Por favor, verifique ou crie uma conta.");
         setLoading(false);
         return;
       }
       
-      console.log("E-mail encontrado, verificando credenciais de autenticação...");
-      
-      // Tentativa direta de autenticação para capturar erros específicos
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password
-      });
-      
-      if (authError) {
-        console.error("Erro na autenticação:", authError);
-        
-        // Tratando diferentes tipos de erros de autenticação
-        if (authError.message.includes("Invalid login credentials")) {
-          setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
-          setLoading(false);
-          return;
-        } else if (authError.message.includes("Email not confirmed")) {
-          setEmailNotConfirmed(true);
-          setEmailForResend(data.email);
-          setLoading(false);
-          return;
-        } else {
-          setLoginError(authError.message || "Erro ao fazer login. Por favor, tente novamente.");
-          setLoading(false);
-          return;
-        }
-      }
-      
-      if (!authData.user) {
-        console.error("Autenticação falhou: nenhum usuário retornado");
-        setLoginError("Erro ao autenticar. Por favor, tente novamente.");
-        setLoading(false);
-        return;
-      }
-      
-      console.log("Autenticação bem-sucedida para:", authData.user.id);
-      
-      // Verificando se o perfil existe na tabela profiles
-      console.log("Verificando se o perfil existe na tabela profiles...");
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, email")
-        .eq("id", authData.user.id)
-        .single();
-      
-      if (profileError && profileError.code === "PGRST116") {
-        console.error("Perfil não encontrado para o usuário autenticado. Criando perfil...");
-        
-        // Criar um perfil básico para este usuário
-        const { error: createError } = await supabase
-          .from("profiles")
-          .insert({
-            id: authData.user.id,
-            full_name: authData.user.user_metadata?.full_name || "Usuário",
-            email: data.email,
-            created_at: new Date().toISOString(),
-            balance: 0,
-          });
-          
-        if (createError) {
-          console.error("Erro ao criar perfil:", createError);
-          setLoginError("Erro ao criar perfil de usuário. Por favor, tente novamente.");
-          // Fazer logout para limpar o estado de autenticação
-          await supabase.auth.signOut();
-          setLoading(false);
-          return;
-        }
-        
-        console.log("Perfil criado com sucesso para:", authData.user.id);
-      } else if (profileError) {
-        console.error("Erro ao verificar perfil:", profileError);
-        setLoginError("Erro ao verificar perfil. Por favor, tente novamente.");
-        setLoading(false);
-        return;
-      } else {
-        console.log("Perfil encontrado:", profileData);
-      }
-      
-      // Neste ponto, a autenticação foi bem-sucedida e temos um perfil
-      console.log("Login totalmente processado com sucesso!");
+      console.log("E-mail encontrado, verificando credenciais...");
       
       try {
-        // Chamar signIn para atualizar o estado global da aplicação
-        console.log("Chamando signIn para atualizar contexto de autenticação...");
+        // Chamar signIn para autenticar
         await signIn(data.email, data.password);
         
         toast.success("Login realizado com sucesso!");
-        console.log("Redirecionando para /traders em 1 segundo...");
         
-        // Atraso maior para garantir que todas as operações assíncronas foram concluídas
-        setTimeout(() => {
-          console.log("Executando redirecionamento para /traders");
-          navigate("/traders");
-        }, 1000);
-      } catch (signInError: any) {
-        console.error("Erro ao fazer signIn no contexto:", signInError);
-        setLoginError("Erro ao finalizar o processo de login. Por favor, tente novamente.");
-        setLoading(false);
+        // Redirecionar para /traders após sucesso
+        console.log("Login bem-sucedido, redirecionando para /traders");
+        navigate("/traders");
+      } catch (error: any) {
+        console.error("Erro ao fazer login:", error);
+        
+        if (error.message?.includes("Invalid login credentials")) {
+          setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
+        } else if (error.message?.includes("Email not confirmed")) {
+          setEmailNotConfirmed(true);
+          setEmailForResend(data.email);
+        } else {
+          setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
+        }
       }
-      
     } catch (error: any) {
       console.error("Erro não tratado ao fazer login:", error);
-      
-      if (error.code === "email_not_confirmed") {
-        setEmailNotConfirmed(true);
-        setEmailForResend(data.email);
-      } else if (error.message && error.message.includes("Invalid login credentials")) {
-        setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
-      } else {
-        setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
-      }
+      setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
+    } finally {
       setLoading(false);
     }
   }
