@@ -48,6 +48,7 @@ const Login = () => {
       console.log("Tentando fazer login com:", data.email);
       
       // Primeiro, verificar se o usuário existe
+      console.log("Verificando se o usuário existe na tabela profiles...");
       const { data: userExists, error: userCheckError } = await supabase
         .from("profiles")
         .select("id, email")
@@ -59,6 +60,7 @@ const Login = () => {
         
         if (userCheckError.code === "PGRST116") {
           // PGRST116 significa que nenhum registro foi encontrado
+          console.error("Usuário não encontrado na tabela profiles");
           setLoginError("Usuário não encontrado. Verifique seu e-mail ou crie uma nova conta.");
           setLoading(false);
           return;
@@ -75,11 +77,18 @@ const Login = () => {
       }
       
       // Se chegou até aqui, o usuário existe, então tenta fazer login
+      console.log("Iniciando signIn...");
       await signIn(data.email, data.password);
       
       // Se chegou aqui, o login foi bem-sucedido
+      console.log("Login realizado com sucesso! Redirecionando para /traders");
       toast.success("Login realizado com sucesso!");
-      navigate("/traders");
+      
+      // Adicionamos um pequeno atraso antes do redirecionamento para garantir que o contexto seja atualizado
+      setTimeout(() => {
+        console.log("Executando redirecionamento para /traders");
+        navigate("/traders");
+      }, 500);
       
     } catch (error: any) {
       console.error("Erro completo ao fazer login:", error);

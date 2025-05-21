@@ -19,7 +19,9 @@ const Index = () => {
       setIsRedirecting(true);
       navigate("/login");
     } else if (user) {
-      console.log("Index: Usuário autenticado, permanecendo na página");
+      console.log("Index: Usuário autenticado, redirecionando para /traders");
+      // Sendo consistente com a aplicação, redirecionar para /traders quando estiver na página inicial
+      navigate("/traders");
     }
   }, [user, loading, navigate]);
 

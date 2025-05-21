@@ -54,8 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(profile);
             setLoading(false);
             
-            // Redirecionar após login bem-sucedido
-            navigate("/traders");
+            // Não redirecione automaticamente aqui - deixe o componente Login lidar com isso
+            console.log("Usuário autenticado, aguardando componente Login redirecionar");
           } catch (error) {
             console.error("Erro ao carregar perfil após evento:", error);
             setLoading(false);
@@ -65,6 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log("Usuário deslogado");
           setUser(null);
           setLoading(false);
+          
+          // Redirecionar para login
+          console.log("Redirecionando para login após logout");
+          navigate("/login");
         }
       }
     );
@@ -141,15 +145,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(profile);
         }
         
+        // Verificar a rota atual
+        console.log("Rota atual:", window.location.pathname);
+        
         // Se o usuário está autenticado e estamos na página de login, redirecionar
         if (window.location.pathname === "/login") {
+          console.log("Usuário já autenticado e está na página de login, redirecionando para /traders");
           navigate("/traders");
         }
       } else {
         console.log("Nenhuma sessão ativa encontrada");
         // Redirecionar para login se estiver em uma rota protegida
         const currentPath = window.location.pathname;
+        console.log("Verificando se precisa redirecionar da rota:", currentPath);
+        
         if (currentPath !== "/login" && currentPath !== "/register" && currentPath !== "/") {
+          console.log("Rota protegida sem autenticação, redirecionando para /login");
           navigate("/login");
         }
       }
@@ -241,9 +252,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profile);
       }
       
-      // Redirecionar e mostrar mensagem
+      // Mostrar mensagem de sucesso
       toast.success("Login realizado com sucesso!");
-      navigate("/traders");
+      
+      // Não redirecione aqui - o componente Login vai lidar com isso
+      console.log("Login completo no AuthContext, aguardando componente Login redirecionar");
     } catch (error: any) {
       console.error("Erro completo de login:", error);
       toast.error("Erro ao fazer login", {
