@@ -14,8 +14,7 @@ import { useSearchParams } from "react-router-dom";
 import { 
   useTraderStore, 
   masterTraderProfileToTraderData, 
-  calculateTraderMetrics,
-  updateTraderMetrics
+  calculateTraderMetrics 
 } from "@/lib/traderStore";
 
 const Settings = () => {
@@ -31,6 +30,7 @@ const Settings = () => {
   
   // Get trader store actions
   const addTrader = useTraderStore(state => state.addTrader);
+  const updateTraderMetrics = useTraderStore(state => state.updateTraderMetrics);
 
   useEffect(() => {
     // Check for tab param in URL
