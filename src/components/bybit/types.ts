@@ -14,12 +14,6 @@ export interface TradeResult {
   source?: 'WebSocket' | 'Manual'; // Adds source information
 }
 
-// Lista de pares de trading comuns
-export const tradingPairs = [
-  'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 
-  'ADAUSDT', 'DOGEUSDT', 'XRPUSDT', 'DOTUSDT'
-];
-
 // WebSocket message types
 export interface WebSocketOrder {
   symbol: string;
@@ -35,8 +29,7 @@ export interface WebSocketOrder {
 // WebSocket connection status
 export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
-// Filtered symbol list for monitoring
+// Monitoring settings (removed symbol filtering)
 export interface MonitoringSettings {
-  enabledSymbols: string[];
   monitoringActive: boolean;
 }

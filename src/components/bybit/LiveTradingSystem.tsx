@@ -4,12 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BybitConnector from './BybitConnector';
 import AccountBalances from './AccountBalances';
-import OrderForm from './OrderForm';
 import TradeResults from './TradeResults';
 import SystemInfo from './SystemInfo';
 import WebSocketMonitor from './WebSocketMonitor';
 import { useBybitTrading } from '@/hooks/useBybitTrading';
-import { tradingPairs } from './types';
 
 const LiveTradingSystem: React.FC = () => {
   const {
@@ -17,33 +15,21 @@ const LiveTradingSystem: React.FC = () => {
     setMasterApi,
     followerApi, 
     setFollowerApi,
-    symbol,
-    setSymbol,
-    side,
-    setSide,
-    quantity,
-    setQuantity,
-    price,
-    setPrice,
     isTradingEnabled,
-    isExecuting,
     tradeResults,
     masterBalance,
     followerBalance,
-    executeRealTrade,
     wsStatus,
     isListening,
     startListening,
     stopListening,
-    monitoredSymbols,
-    toggleSymbolMonitoring,
     fetchBalances
   } = useBybitTrading();
 
   return (
     <Card className="border shadow-md">
       <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
-        <CardTitle>Sistema de Trading ao Vivo - Bybit</CardTitle>
+        <CardTitle>Sistema de Trading ao Vivo - Bybit Futuros Perpétuos</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -73,35 +59,13 @@ const LiveTradingSystem: React.FC = () => {
           isTradingEnabled={isTradingEnabled}
           onStartListening={startListening}
           onStopListening={stopListening}
-          monitoredSymbols={monitoredSymbols}
-          availableSymbols={tradingPairs}
-          onToggleSymbol={toggleSymbolMonitoring}
         />
         
-        <Tabs defaultValue="manual">
+        <Tabs defaultValue="results">
           <TabsList className="mb-4">
-            <TabsTrigger value="manual">Trading Manual</TabsTrigger>
             <TabsTrigger value="results">Histórico de Operações</TabsTrigger>
             <TabsTrigger value="info">Informações</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="manual">
-            <div className="border-t pt-4">
-              <OrderForm 
-                symbol={symbol}
-                side={side}
-                quantity={quantity}
-                price={price}
-                isExecuting={isExecuting}
-                isTradingEnabled={isTradingEnabled}
-                onSymbolChange={setSymbol}
-                onSideChange={setSide}
-                onQuantityChange={setQuantity}
-                onPriceChange={setPrice}
-                onExecuteTrade={executeRealTrade}
-              />
-            </div>
-          </TabsContent>
           
           <TabsContent value="results">
             <TradeResults tradeResults={tradeResults} />

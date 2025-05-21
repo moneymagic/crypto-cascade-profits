@@ -21,7 +21,7 @@ const AccountBalances: React.FC<AccountBalancesProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-medium">Saldos das Contas</h3>
+        <h3 className="text-lg font-medium">Saldos das Contas (Futuros Perpétuos)</h3>
         {onRefreshBalances && (
           <Button 
             variant="outline" 

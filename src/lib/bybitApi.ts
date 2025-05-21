@@ -1,4 +1,3 @@
-
 import crypto from 'crypto';
 
 // Interface para as credenciais da API Bybit
@@ -17,6 +16,7 @@ export interface OrderParams {
   price?: string;
   timeInForce?: 'GoodTillCancel' | 'ImmediateOrCancel' | 'FillOrKill' | 'PostOnly';
   positionIdx?: number;
+  category?: 'linear' | 'spot'; // Adicionado suporte explícito para futuros perpétuos
 }
 
 class BybitAPI {
@@ -103,7 +103,7 @@ class BybitAPI {
   // Criar uma ordem
   async createOrder(orderParams: OrderParams) {
     return await this.request('/v5/order/create', 'POST', {
-      category: 'spot',
+      category: orderParams.category || 'linear', // Default to linear (perpetual futures)
       ...orderParams
     });
   }
@@ -151,12 +151,12 @@ class BybitAPI {
         
         this.wsConnection?.send(authMessage);
         
-        // Subscribe to execution updates (filled orders)
+        // Subscribe to execution updates (filled orders) - specifically for linear (perpetual futures)
         setTimeout(() => {
           if (this.wsConnection?.readyState === WebSocket.OPEN) {
             const subscribeMessage = JSON.stringify({
               op: 'subscribe',
-              args: ['execution']
+              args: ['execution.linear']  // Specifically subscribe to perpetual futures executions
             });
             this.wsConnection.send(subscribeMessage);
             
