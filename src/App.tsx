@@ -23,6 +23,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import MasterTraderSignup from '@/pages/MasterTraderSignup';
 import Transactions from '@/pages/Transactions';
+import Dashboard from '@/pages/Dashboard';
 
 // Componente para proteger rotas que exigem autenticação
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -61,6 +62,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           
           {/* Rotas protegidas */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/traders" element={<ProtectedRoute><Traders /></ProtectedRoute>} />
           <Route path="/trader/:traderId" element={<ProtectedRoute><TraderProfile /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
