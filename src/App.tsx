@@ -11,6 +11,7 @@ import CopyTrading from "./pages/CopyTrading";
 import Bonus from "./pages/Bonus";
 import Earnings from "./pages/Earnings";
 import Wallet from "./pages/Wallet";
+import MasterTraderSignup from "./pages/MasterTraderSignup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/bonus" element={<Bonus />} />
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/wallet" element={<Wallet />} />
+          <Route path="/master-trader-signup" element={<MasterTraderSignup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

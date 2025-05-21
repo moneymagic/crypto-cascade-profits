@@ -9,7 +9,8 @@ import {
   Gift, 
   BarChart, 
   Settings,
-  Wallet
+  Wallet,
+  UserPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export function MainSidebar() {
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: Users, label: "Traders", path: "/traders" },
+    { icon: UserPlus, label: "Torne-se Master Trader", path: "/master-trader-signup" },
     { icon: PieChart, label: "Portfolio", path: "/portfolio" },
     { icon: Copy, label: "Copy Trading", path: "/copy-trading" },
     { icon: Gift, label: "Bônus", path: "/bonus" },
