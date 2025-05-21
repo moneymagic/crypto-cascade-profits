@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from './supabase';
@@ -236,8 +237,28 @@ export const masterTraderProfileToTraderData = (profile: any): TraderData => {
     apiKey: profile.apiKey,
     apiSecret: profile.apiSecret,
     lastUpdated: new Date().toISOString(),
-    user_id: supabase.auth.getUser().then(({ data }) => data?.user?.id) || undefined
+    // Corrigindo o erro: obtendo o ID do usuário de forma assíncrona
+    user_id: undefined // Vamos definir isso após obter o ID do usuário
   };
+};
+
+// Versão assíncrona para definir o user_id após criar o objeto
+export const createMasterTraderProfileWithUserId = async (profile: any): Promise<TraderData> => {
+  // Criar o objeto TraderData primeiro sem o user_id
+  const traderData = masterTraderProfileToTraderData(profile);
+  
+  try {
+    // Obter o usuário atual
+    const { data } = await supabase.auth.getUser();
+    // Definir o user_id se o usuário estiver disponível
+    if (data?.user) {
+      traderData.user_id = data.user.id;
+    }
+  } catch (error) {
+    console.error('Erro ao obter ID do usuário:', error);
+  }
+  
+  return traderData;
 };
 
 // Função para calcular métricas com base nas operações da Bybit
