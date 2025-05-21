@@ -1,499 +1,212 @@
+
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Shield, Key, Lock, UserPlus, Wallet, BarChart, LogOut, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
+import ApiKeyManager from "@/components/settings/ApiKeyManager";
 import MasterTraderForm from "@/components/settings/MasterTraderForm";
-import MasterTraderDashboard from "@/components/settings/MasterTraderDashboard";
-import { useSearchParams } from "react-router-dom";
-import { 
-  useTraderStore, 
-  masterTraderProfileToTraderData, 
-  calculateTraderMetrics 
-} from "@/lib/traderStore";
-import { useAuth } from "@/contexts/AuthContext";
-import { saveApiKey, getApiKeys } from "@/lib/database";
 
 const Settings = () => {
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
-  const [isTestnet, setIsTestnet] = useState(true);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [isMasterTrader, setIsMasterTrader] = useState(false);
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('security');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Get trader store actions
-  const addTrader = useTraderStore(state => state.addTrader);
-  const updateTraderMetrics = useTraderStore(state => state.updateTraderMetrics);
   const { user, signOut } = useAuth();
+  const [formLoading, setFormLoading] = useState(false);
+  const [name, setName] = useState(user?.user_metadata?.full_name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  useEffect(() => {
-    // Check for tab param in URL
-    const tabParam = searchParams.get('tab');
-    if (tabParam && ['security', 'api', 'mastertrader'].includes(tabParam)) {
-      setActiveTab(tabParam);
-    }
-
-    // Para demonstração, verificar se o usuário é um master trader
-    const checkMasterTraderStatus = () => {
-      // Mock implementation - this would check with your backend
-      const mockUserData = localStorage.getItem('user_data');
-      if (mockUserData) {
-        try {
-          const userData = JSON.parse(mockUserData);
-          setIsMasterTrader(userData.isMasterTrader || false);
-        } catch (e) {
-          console.error("Error parsing user data", e);
-        }
-      }
-    };
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    checkMasterTraderStatus();
+    setFormLoading(true);
     
-    // Carregar chaves de API salvas no banco
-    const loadApiKeys = async () => {
-      if (user?.id) {
-        try {
-          const keys = await getApiKeys(user.id, 'bybit');
-          if (keys && keys.length > 0) {
-            setApiKey(keys[0].api_key);
-            setApiSecret(keys[0].api_secret);
-            setIsTestnet(keys[0].is_testnet);
-          }
-        } catch (error) {
-          console.error("Erro ao carregar chaves de API:", error);
-        }
-      }
-    };
+    // Simular atualização de perfil
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    loadApiKeys();
-  }, [searchParams, user?.id]);
-
-  const handleApiSave = async () => {
-    if (!apiKey || !apiSecret) {
-      toast.error("API Key e Secret são obrigatórios");
-      return;
-    }
-
-    if (!user?.id) {
-      toast.error("Você precisa estar logado para salvar a API");
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Salvar no Supabase
-      await saveApiKey(user.id, 'bybit', apiKey, apiSecret, isTestnet);
-      
-      // Também salvar no localStorage para compatibilidade
-      localStorage.setItem("bybit_apiKey", apiKey);
-      localStorage.setItem("bybit_apiSecret", apiSecret);
-      localStorage.setItem("bybit_testnet", String(isTestnet));
-      
-      toast.success("Configurações Salvas", {
-        description: "Suas configurações de API foram salvas com sucesso."
-      });
-    } catch (error) {
-      console.error("Erro ao salvar chaves de API:", error);
-      toast.error("Erro ao Salvar", {
-        description: "Ocorreu um erro ao tentar salvar suas chaves de API."
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePasswordChange = () => {
-    if (!currentPassword) {
-      toast.error("Senha atual é obrigatória");
-      return;
-    }
-
-    if (!newPassword || newPassword.length < 8) {
-      toast.error("Nova senha deve ter pelo menos 8 caracteres");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error("As novas senhas não coincidem");
-      return;
-    }
-
-    // Mock password change success
-    toast.success("Senha Alterada", {
-      description: "Sua senha foi alterada com sucesso."
+    toast({
+      title: "Perfil atualizado",
+      description: "Suas informações foram atualizadas com sucesso."
     });
     
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-  };
-
-  // For handling photo previews in the form
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-
-  // Handle master trader form submission
-  const handleMasterTraderSubmit = (data) => {
-    console.log("Submitted master trader application:", data);
-    
-    // Create a new trader profile for the trader store
-    const traderData = masterTraderProfileToTraderData({
-      name: data.name,
-      strategyName: data.strategyName,
-      bio: data.bio,
-      photoUrl: photoPreview ? photoPreview : "",
-      apiKey: data.apiKey,
-      apiSecret: data.apiSecret
-    });
-    
-    // Add the trader to the store
-    addTrader(traderData);
-    
-    // Save user data to localStorage
-    localStorage.setItem('user_data', JSON.stringify({
-      ...JSON.parse(localStorage.getItem('user_data') || '{}'),
-      isMasterTrader: true,
-      masterTraderData: data,
-      traderId: traderData.id
-    }));
-    
-    setIsMasterTrader(true);
-    
-    toast.success("Cadastro Realizado", {
-      description: "Seu cadastro como Master Trader foi concluído com sucesso! As métricas serão calculadas automaticamente com base nas suas operações na Bybit."
-    });
-
-    // Calcular métricas iniciais após um breve intervalo
-    setTimeout(async () => {
-      try {
-        // Calcular métricas com base nas operações da Bybit
-        const metrics = await calculateTraderMetrics(data.apiKey, data.apiSecret, true);
-        
-        // Atualizar trader com as métricas calculadas
-        updateTraderMetrics(traderData.id, metrics);
-        
-        toast.success("Métricas Atualizadas", {
-          description: "Suas métricas de desempenho foram calculadas com sucesso!"
-        });
-      } catch (error) {
-        console.error("Erro ao calcular métricas iniciais:", error);
-        toast.error("Erro ao Calcular Métricas", {
-          description: "Ocorreu um erro ao calcular suas métricas de desempenho. Será feita uma nova tentativa mais tarde."
-        });
-      }
-    }, 2000);
+    setFormLoading(false);
   };
   
-  // Handle canceling master trader status
-  const handleCancelMasterTrader = () => {
-    // Get the current user data
-    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // If the user has a traderId, we could remove them from the store here
-    // This is optional - you might want to keep their profile in the system
-    // but mark it as inactive instead
-    
-    // Update localStorage
-    userData.isMasterTrader = false;
-    localStorage.setItem('user_data', JSON.stringify(userData));
-    
-    setIsMasterTrader(false);
-    
-    toast.success("Status Alterado", {
-      description: "Você não é mais um Master Trader e voltará a pagar taxas normalmente na plataforma."
-    });
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      toast.success("Logout realizado com sucesso");
-    } catch (error) {
-      toast.error("Erro ao fazer logout", {
-        description: "Ocorreu um problema ao tentar sair da sua conta."
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem.",
+        variant: "destructive"
       });
+      return;
     }
+    
+    setFormLoading(true);
+    
+    // Simular atualização de senha
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    toast({
+      title: "Senha atualizada",
+      description: "Sua senha foi atualizada com sucesso."
+    });
+    
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setFormLoading(false);
   };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div>
           <h1 className="text-3xl font-bold">Configurações</h1>
-          <Button 
-            variant="destructive" 
-            onClick={handleLogout}
-            className="flex items-center gap-2"
-          >
-            <LogOut size={16} />
-            Sair da conta
-          </Button>
+          <p className="text-muted-foreground">
+            Gerencie suas preferências, informações pessoais e chaves de API.
+          </p>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="security">
-              <Shield className="mr-2 h-4 w-4" />
-              Segurança
-            </TabsTrigger>
-            <TabsTrigger value="api">
-              <Key className="mr-2 h-4 w-4" />
-              Configuração de API
-            </TabsTrigger>
-            <TabsTrigger value="mastertrader">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Master Trader
-            </TabsTrigger>
+        <Tabs defaultValue="profile">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsTrigger value="profile">Conta</TabsTrigger>
+            <TabsTrigger value="api-keys">Chaves de API</TabsTrigger>
+            <TabsTrigger value="trader">Master Trader</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="security">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
-                  <CardTitle>
-                    <div className="flex items-center">
-                      <Lock className="mr-2 h-5 w-5" /> 
-                      Trocar Senha
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password">Senha Atual</Label>
-                    <Input 
-                      id="current-password" 
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)} 
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">Nova Senha</Label>
-                    <Input 
-                      id="new-password" 
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)} 
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirme a Nova Senha</Label>
-                    <Input 
-                      id="confirm-password" 
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)} 
-                    />
-                  </div>
-                  
-                  <Button onClick={handlePasswordChange} className="w-full">
-                    Atualizar Senha
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
-                  <CardTitle>
-                    <div className="flex items-center">
-                      <Shield className="mr-2 h-5 w-5" /> 
-                      Configurações de Segurança
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Notificações de Login</p>
-                      <p className="text-sm text-muted-foreground">
-                        Receber alertas quando sua conta for acessada
-                      </p>
-                    </div>
-                    <Switch id="login-notifications" defaultChecked />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Autenticação de Dois Fatores</p>
-                      <p className="text-sm text-muted-foreground">
-                        Adicionar camada extra de segurança
-                      </p>
-                    </div>
-                    <Switch id="2fa" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Atividade da Conta</p>
-                      <p className="text-sm text-muted-foreground">
-                        Manter registro de atividades importantes
-                      </p>
-                    </div>
-                    <Switch id="account-activity" defaultChecked />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="api">
+          <TabsContent value="profile" className="space-y-6">
             <Card>
-              <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
-                <CardTitle>
-                  <div className="flex items-center">
-                    <Key className="mr-2 h-5 w-5" /> 
-                    Configuração de API Bybit
-                  </div>
-                </CardTitle>
+              <CardHeader>
+                <CardTitle>Perfil</CardTitle>
+                <CardDescription>
+                  Atualize suas informações pessoais.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="api-key">API Key</Label>
-                  <Input 
-                    id="api-key"
-                    type="text" 
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Digite sua API Key da Bybit"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="api-secret">API Secret</Label>
-                  <Input 
-                    id="api-secret"
-                    type="password" 
-                    value={apiSecret}
-                    onChange={(e) => setApiSecret(e.target.value)}
-                    placeholder="Digite seu API Secret da Bybit"
-                  />
-                </div>
-                
-                <div className="flex items-center space-x-2 py-2">
-                  <Switch
-                    id="testnet"
-                    checked={isTestnet}
-                    onCheckedChange={setIsTestnet}
-                  />
-                  <Label htmlFor="testnet">Usar Testnet (ambiente de testes)</Label>
-                </div>
-                
+              <CardContent>
+                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome completo</Label>
+                    <Input 
+                      id="name" 
+                      value={name} 
+                      onChange={(e) => setName(e.target.value)}
+                      className="max-w-md"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-mail</Label>
+                    <Input 
+                      id="email"
+                      type="email" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)} 
+                      disabled
+                      className="max-w-md"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Seu endereço de e-mail não pode ser alterado.
+                    </p>
+                  </div>
+                  
+                  <Button type="submit" disabled={formLoading}>
+                    {formLoading ? "Atualizando..." : "Atualizar perfil"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Segurança</CardTitle>
+                <CardDescription>
+                  Atualize sua senha.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Senha atual</Label>
+                    <Input 
+                      id="current-password"
+                      type="password" 
+                      value={currentPassword} 
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="max-w-md"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Nova senha</Label>
+                    <Input 
+                      id="new-password"
+                      type="password" 
+                      value={newPassword} 
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="max-w-md"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirmar nova senha</Label>
+                    <Input 
+                      id="confirm-password"
+                      type="password" 
+                      value={confirmPassword} 
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="max-w-md"
+                    />
+                  </div>
+                  
+                  <Button type="submit" disabled={formLoading}>
+                    {formLoading ? "Atualizando..." : "Atualizar senha"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Sessão</CardTitle>
+                <CardDescription>
+                  Gerencie sua sessão atual.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <Button 
-                  onClick={handleApiSave}
-                  className="w-full"
-                  disabled={isLoading}
+                  variant="destructive" 
+                  onClick={() => signOut()}
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    'Salvar Configurações de API'
-                  )}
+                  Sair
                 </Button>
-                
-                <div className="text-sm text-muted-foreground mt-4">
-                  <p className="font-medium">Importante:</p>
-                  <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li>Use apenas chaves de API com permissões limitadas</li>
-                    <li>Crie chaves dedicadas para VastCopy</li>
-                    <li>Nunca compartilhe suas chaves com terceiros</li>
-                    <li>Suas chaves são armazenadas de forma segura em nosso banco de dados</li>
-                  </ul>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="mastertrader">
-            {isMasterTrader ? (
-              <div className="space-y-6">
-                <Card className="mb-6">
-                  <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
-                    <CardTitle>
-                      <div className="flex items-center">
-                        <UserPlus className="mr-2 h-5 w-5" />
-                        Status Master Trader
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center p-4 bg-green-50 border border-green-100 rounded-md">
-                      <div className="bg-green-100 p-2 rounded-full mr-4">
-                        <Shield className="h-6 w-6 text-green-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-green-800">Conta Master Trader Ativa</h3>
-                        <p className="text-sm text-green-600">
-                          Sua conta possui privilégios de Master Trader. Você não paga taxas na plataforma 
-                          e pode ser seguido por outros usuários.
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md mb-4">
-                      <div className="flex items-start">
-                        <div className="bg-blue-100 p-2 rounded-full mr-3 mt-0.5">
-                          <Lock className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-blue-800">Restrições da Conta</h3>
-                          <p className="text-sm text-blue-600">
-                            Como Master Trader, você não pode seguir outros traders, mas pode ser seguido 
-                            por outros usuários na plataforma.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6">
-                      <Button 
-                        variant="destructive" 
-                        className="w-full"
-                        onClick={handleCancelMasterTrader}
-                      >
-                        Deixar de Ser Master Trader
-                      </Button>
-                      <p className="text-sm text-gray-500 mt-2 text-center">
-                        Ao deixar de ser Master Trader, você voltará a pagar taxas normalmente e perderá os seguidores.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <MasterTraderDashboard onCancelMasterTrader={handleCancelMasterTrader} />
-              </div>
-            ) : (
-              <Card>
-                <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
-                  <CardTitle>
-                    <div className="flex items-center">
-                      <UserPlus className="mr-2 h-5 w-5" />
-                      Torne-se um Master Trader
-                    </div>
-                  </CardTitle>
-                  <CardDescription className="text-gray-200">
-                    Preencha o formulário abaixo para se tornar um master trader na plataforma VastCopy.
-                    Master Traders não pagam taxas e podem ser seguidos por outros usuários.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <MasterTraderForm onSubmit={handleMasterTraderSubmit} />
-                </CardContent>
-              </Card>
-            )}
+          <TabsContent value="api-keys">
+            <ApiKeyManager />
+          </TabsContent>
+          
+          <TabsContent value="trader">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações de Master Trader</CardTitle>
+                <CardDescription>
+                  Cadastre-se para se tornar um master trader na plataforma VastCopy.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MasterTraderForm />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

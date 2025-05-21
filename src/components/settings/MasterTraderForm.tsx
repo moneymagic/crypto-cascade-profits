@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -131,11 +130,21 @@ const MasterTraderForm = ({ onSubmit: externalOnSubmit }: MasterTraderFormProps)
           user_id: user.id,
           api_key: data.apiKey,
           api_secret: data.apiSecret,
+          is_testnet: true, // Por padrão, usamos testnet para segurança
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
         
       if (error) throw error;
+      
+      // Também salvar as chaves de API no sistema de chaves da plataforma
+      await saveApiKey(
+        user.id,
+        'bybit_master',
+        data.apiKey,
+        data.apiSecret,
+        true // testnet por padrão
+      );
       
       // Exibir mensagem de sucesso e redirecionar
       toast.success("Cadastro como Master Trader realizado com sucesso!");

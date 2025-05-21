@@ -1,502 +1,331 @@
-import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/Dashboard";
-import { 
-  Avatar, 
-  AvatarFallback, 
-  AvatarImage 
-} from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Award, TrendingUp, Users, Activity } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useTraderStore } from "@/lib/traderStore";
-
-// Mock data for past operations
-const pastOperations = [
-  { id: 1, date: "2023-05-15", pair: "BTC/USDT", type: "Buy", amount: "0.05 BTC", price: "$42,850", result: "+12.3%", status: "Fechada" },
-  { id: 2, date: "2023-05-12", pair: "ETH/USDT", type: "Buy", amount: "1.2 ETH", price: "$3,150", result: "+8.7%", status: "Fechada" },
-  { id: 3, date: "2023-05-10", pair: "SOL/USDT", type: "Sell", amount: "15 SOL", price: "$128", result: "+5.2%", status: "Fechada" },
-  { id: 4, date: "2023-05-07", pair: "AVAX/USDT", type: "Buy", amount: "10 AVAX", price: "$35.40", result: "-2.8%", status: "Fechada" },
-  { id: 5, date: "2023-05-05", pair: "DOT/USDT", type: "Sell", amount: "25 DOT", price: "$18.75", result: "+9.3%", status: "Fechada" },
-  { id: 6, date: "2023-05-01", pair: "BTC/USDT", type: "Sell", amount: "0.08 BTC", price: "$40,120", result: "+3.6%", status: "Fechada" },
-];
-
-// Mock data for top followers - updated to show dollar amounts instead of percentages
-const topFollowers = [
-  { id: 1, name: "Rafael Soares", profit: "$6,420", since: "Jan 2023", avatar: "" },
-  { id: 2, name: "Julia Campos", profit: "$5,870", since: "Fev 2023", avatar: "" },
-  { id: 3, name: "Pedro Marques", profit: "$5,230", since: "Dez 2022", avatar: "" },
-  { id: 4, name: "Bianca Lopes", profit: "$4,980", since: "Mar 2023", avatar: "" },
-  { id: 5, name: "Gabriel Santos", profit: "$4,510", since: "Fev 2023", avatar: "" },
-];
-
-// Form schema for copy trading investment
-const formSchema = z.object({
-  investmentAmount: z
-    .string()
-    .min(1, "Valor é obrigatório")
-    .refine(
-      (val) => {
-        const num = parseFloat(val.replace(/[^0-9,.]/g, '').replace(',', '.'));
-        return !isNaN(num) && num >= 10;
-      },
-      {
-        message: "O valor mínimo de investimento é $10",
-      }
-    ),
-  stopLoss: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (!val) return true;
-        const num = parseFloat(val.replace(/[^0-9,.]/g, '').replace(',', '.'));
-        return isNaN(num) || num >= 5;
-      },
-      {
-        message: "O Stop Loss deve ser no mínimo 5%",
-      }
-    ),
-});
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { followTrader } from "@/lib/database";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 const TraderProfile = () => {
-  const { traderId } = useParams();
-  const [isFollowing, setIsFollowing] = useState(false);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [trader, setTrader] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [followLoading, setFollowLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  
-  // Get all traders from the trader store
-  const allTraders = useTraderStore((state) => state.traders);
-  
-  // Find trader data based on URL parameter
-  const trader = allTraders.find(t => t.id === traderId);
-  
-  // Form for copy trading investment
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      investmentAmount: "",
-      stopLoss: "",
-    },
-  });
-  
-  if (!trader) {
+  const [allocationPercent, setAllocationPercent] = useState(10);
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  // Carregar dados do trader
+  useEffect(() => {
+    async function loadTrader() {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from('traders')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (error) throw error;
+        setTrader(data);
+        
+        // Verificar se o usuário tem API key configurada
+        if (user) {
+          const { data: apiKeys } = await supabase
+            .from('api_keys')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('exchange', 'bybit_follower');
+            
+          setHasApiKey(apiKeys && apiKeys.length > 0);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do trader:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar dados do trader.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadTrader();
+  }, [id, user, toast]);
+
+  const handleFollow = async () => {
+    if (!user) {
+      toast({
+        title: "Não autenticado",
+        description: "Você precisa estar logado para seguir um trader.",
+        variant: "destructive"
+      });
+      navigate("/login");
+      return;
+    }
+    
+    if (!hasApiKey) {
+      toast({
+        title: "API Key necessária",
+        description: "Você precisa configurar sua API key da Bybit nas configurações antes de seguir um trader.",
+        variant: "destructive"
+      });
+      navigate("/settings");
+      return;
+    }
+    
+    setFollowLoading(true);
+    
+    try {
+      await followTrader(user.id, id!, allocationPercent);
+      
+      toast({
+        title: "Trader seguido com sucesso",
+        description: `Você está agora seguindo ${trader.name} com ${allocationPercent}% do seu capital.`
+      });
+      
+      setDialogOpen(false);
+      
+      // Redirecionar para a página de copy trading
+      navigate("/copy-trading");
+    } catch (error) {
+      console.error("Erro ao seguir trader:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível seguir este trader.",
+        variant: "destructive"
+      });
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-[70vh]">
-          <h1 className="text-2xl font-bold mb-4">Trader não encontrado</h1>
-          <p className="text-muted-foreground mb-6">O perfil que você está procurando não existe ou foi removido.</p>
-          <Link to="/traders">
-            <Button>Voltar para lista de Traders</Button>
-          </Link>
+        <div className="text-center py-12">
+          <p>Carregando perfil do trader...</p>
         </div>
       </DashboardLayout>
     );
   }
-  
-  // Extended trader data for the profile view
-  const extendedTrader = {
-    ...trader,
-    bio: trader.description || "Sem biografia disponível",
-    profit180d: trader.profit90d ? `${parseFloat(trader.profit90d) * 2}%` : "+0%",
-    rank: 1,
-    totalTrades: 852,
-    successfulTrades: 665,
-    averageProfit: "3.8%",
-  };
-  
-  const toggleFollow = () => {
-    setDialogOpen(true);
-  };
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    // Format the investment amount for display
-    const amount = parseFloat(data.investmentAmount.replace(/[^0-9,.]/g, '').replace(',', '.'));
-    
-    // Close dialog
-    setDialogOpen(false);
-    
-    // Set following state
-    setIsFollowing(true);
-    
-    // Show success toast
-    toast({
-      title: "Copy Trading Ativado",
-      description: `Você agora está copiando ${trader.name} com $${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-    });
-  };
-
-  const formatCurrency = (input: string) => {
-    // Remove non-numeric characters
-    const numericValue = input.replace(/[^0-9]/g, '');
-    
-    // Convert to number and format
-    if (numericValue) {
-      const number = parseInt(numericValue, 10) / 100;
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(number);
-    }
-    
-    return input;
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-    const formatted = formatCurrency(e.target.value);
-    field.onChange(formatted);
-  };
-
-  // Function to safely format follower count
-  const formatFollowers = (followers: string | number): string => {
-    if (typeof followers === 'number') {
-      return followers.toLocaleString();
-    }
-    return String(followers);
-  };
+  if (!trader) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h1 className="text-xl font-bold">Trader não encontrado</h1>
+          <p className="mt-2 text-muted-foreground">O trader que você procura não existe ou foi removido.</p>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/traders")}
+            className="mt-4"
+          >
+            Voltar para lista de traders
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <Link to="/traders" className="text-sm text-muted-foreground hover:text-primary">
-            &larr; Voltar para lista de Traders
-          </Link>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">{trader.name}</h1>
+            <p className="text-muted-foreground">
+              {trader.specialization} • Win rate: {trader.win_rate}
+            </p>
+          </div>
+          
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="lg" className="w-full md:w-auto">
+                Copiar este trader
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Configurar Copy Trading</DialogTitle>
+                <DialogDescription>
+                  Defina quanto do seu capital será alocado para copiar as operações deste trader.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label>Alocação de capital</Label>
+                    <span className="font-medium">{allocationPercent}%</span>
+                  </div>
+                  <Slider
+                    value={[allocationPercent]}
+                    onValueChange={(values) => setAllocationPercent(values[0])}
+                    min={5}
+                    max={100}
+                    step={5}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {allocationPercent}% do seu capital disponível será usado para copiar as operações deste trader.
+                  </p>
+                </div>
+                
+                {!hasApiKey && (
+                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-md text-sm">
+                    <strong>Atenção:</strong> Você precisa configurar sua API key da Bybit nas configurações antes de seguir este trader.
+                  </div>
+                )}
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleFollow} 
+                  disabled={followLoading || !hasApiKey}
+                >
+                  {followLoading ? "Processando..." : "Confirmar"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
         
-        {/* Header */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1 overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-crypto-blue to-crypto-purple" />
-            <CardContent className="p-6">
-              <div className="flex flex-col items-center text-center space-y-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={trader.avatar} />
-                  <AvatarFallback className="bg-primary/20 text-primary text-2xl">
-                    {trader.name.split(" ").map(n => n[0]).join("")}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div>
-                  <div className="flex items-center justify-center gap-2">
-                    <h2 className="text-2xl font-bold">{trader.name}</h2>
-                    {trader.verified && (
-                      <Badge variant="outline" className="border-crypto-blue text-crypto-blue">
-                        Verificado
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-muted-foreground">{trader.specialization}</div>
-                </div>
-                
-                <div className="flex justify-center gap-2">
-                  <Button 
-                    onClick={toggleFollow}
-                    variant={isFollowing ? "outline" : "default"}
-                  >
-                    {isFollowing ? "Deixar de copiar" : "Copiar Trader"}
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-3 w-full gap-4 py-4 border-y mt-2">
-                  <div>
-                    <div className="font-medium text-2xl">{trader.winRate}</div>
-                    <div className="text-xs text-muted-foreground">Win Rate</div>
-                  </div>
-                  <div>
-                    <div className={`font-medium text-2xl ${trader.positive ? 'text-crypto-green' : 'text-crypto-red'}`}>
-                      {trader.profit30d}
-                    </div>
-                    <div className="text-xs text-muted-foreground">30 dias</div>
-                  </div>
-                  <div>
-                    <div className="font-medium text-2xl">{formatFollowers(trader.followers)}</div>
-                    <div className="text-xs text-muted-foreground">Seguidores</div>
-                  </div>
-                </div>
-                
-                <div className="w-full text-left">
-                  <h3 className="font-semibold mb-1">Bio</h3>
-                  <p className="text-sm text-muted-foreground">{extendedTrader.bio}</p>
-                </div>
-                
-                <div className="flex items-center gap-2 text-muted-foreground text-sm w-full justify-start">
-                  <Award className="h-4 w-4 text-yellow-500" />
-                  <span>Ranking #{extendedTrader.rank} entre traders</span>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Win Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{trader.win_rate}</div>
+              <p className="text-xs text-muted-foreground">
+                Últimos 30 dias
+              </p>
             </CardContent>
           </Card>
           
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Desempenho</CardTitle>
-              <CardDescription>Histórico de desempenho ao longo do tempo</CardDescription>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Lucro</CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="lucratividade">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="lucratividade">Lucratividade</TabsTrigger>
-                  <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="lucratividade">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="text-center">
-                            <TrendingUp className="h-8 w-8 mx-auto text-crypto-green mb-2" />
-                            <div className="text-2xl font-semibold text-crypto-green">{trader.profit30d}</div>
-                            <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="text-center">
-                            <TrendingUp className="h-8 w-8 mx-auto text-crypto-green mb-2" />
-                            <div className="text-2xl font-semibold text-crypto-green">{trader.profit90d}</div>
-                            <p className="text-xs text-muted-foreground">Últimos 90 dias</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="text-center">
-                            <TrendingUp className="h-8 w-8 mx-auto text-crypto-green mb-2" />
-                            <div className="text-2xl font-semibold text-crypto-green">{extendedTrader.profit180d}</div>
-                            <p className="text-xs text-muted-foreground">Últimos 180 dias</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="h-[200px] flex items-center justify-center bg-muted/20 rounded-md">
-                          <div className="text-center text-muted-foreground">
-                            <p>Gráfico de desempenho</p>
-                            <p className="text-xs">(Dados simulados para demonstração)</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="estatisticas">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-center">
-                          <Activity className="h-8 w-8 mx-auto text-primary mb-2" />
-                          <div className="text-2xl font-semibold">{extendedTrader.totalTrades}</div>
-                          <p className="text-xs text-muted-foreground">Total de Operações</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-center">
-                          <Activity className="h-8 w-8 mx-auto text-crypto-green mb-2" />
-                          <div className="text-2xl font-semibold">{extendedTrader.successfulTrades}</div>
-                          <p className="text-xs text-muted-foreground">Operações Lucrativas</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-center">
-                          <TrendingUp className="h-8 w-8 mx-auto text-crypto-green mb-2" />
-                          <div className="text-2xl font-semibold text-crypto-green">{extendedTrader.averageProfit}</div>
-                          <p className="text-xs text-muted-foreground">Lucro Médio/Operação</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-              </Tabs>
+              <div className={`text-2xl font-bold ${trader.positive ? 'text-crypto-green' : 'text-crypto-red'}`}>
+                {trader.profit_30d}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Últimos 30 dias
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Seguidores</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{trader.followers}</div>
+              <p className="text-xs text-muted-foreground">
+                Usuários copiando
+              </p>
             </CardContent>
           </Card>
         </div>
         
-        {/* Operations History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Operações Recentes
-            </CardTitle>
-            <CardDescription>Histórico das últimas operações realizadas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Par</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Quantidade</TableHead>
-                  <TableHead>Preço</TableHead>
-                  <TableHead>Resultado</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pastOperations.map((op) => (
-                  <TableRow key={op.id}>
-                    <TableCell>{op.date}</TableCell>
-                    <TableCell>{op.pair}</TableCell>
-                    <TableCell>
-                      <Badge variant={op.type === "Buy" ? "default" : "destructive"}>
-                        {op.type === "Buy" ? "Compra" : "Venda"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{op.amount}</TableCell>
-                    <TableCell>{op.price}</TableCell>
-                    <TableCell className={op.result.includes("+") ? "text-crypto-green" : "text-crypto-red"}>
-                      {op.result}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="border-crypto-green text-crypto-green">
-                        {op.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        
-        {/* Top Followers */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Top Seguidores
-            </CardTitle>
-            <CardDescription>Os seguidores que mais lucraram copiando este trader</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {topFollowers.map((follower, index) => (
-                <div key={follower.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/20 text-primary">
-                      {index + 1}
+        <Tabs defaultValue="about">
+          <TabsList>
+            <TabsTrigger value="about">Sobre</TabsTrigger>
+            <TabsTrigger value="performance">Desempenho</TabsTrigger>
+            <TabsTrigger value="strategy">Estratégia</TabsTrigger>
+          </TabsList>
+          <TabsContent value="about" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Sobre o Trader</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start space-x-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={trader.avatar_url || ''} />
+                    <AvatarFallback className="bg-primary/20 text-primary text-xl">
+                      {trader.name.split(" ").map(n => n[0]).join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="space-y-3 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                      <div>
+                        <h3 className="font-medium text-lg flex items-center gap-2">
+                          {trader.name}
+                          {trader.verified && (
+                            <Badge variant="outline" className="border-crypto-blue text-crypto-blue">
+                              Verificado
+                            </Badge>
+                          )}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">{trader.specialization}</p>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="border-crypto-green text-crypto-green">
+                          {trader.followers} seguidores
+                        </Badge>
+                      </div>
                     </div>
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={follower.avatar} />
-                      <AvatarFallback className="bg-primary/20 text-primary">
-                        {follower.name.split(" ").map(n => n[0]).join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{follower.name}</div>
-                      <div className="text-sm text-muted-foreground">Seguindo desde {follower.since}</div>
+                    
+                    <div className="text-sm text-foreground whitespace-pre-line">
+                      {trader.description}
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-crypto-green">{follower.profit}</div>
-                    <div className="text-sm text-muted-foreground">Lucro Total</div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="performance">
+            <Card>
+              <CardHeader>
+                <CardTitle>Histórico de Desempenho</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center py-8">
+                <p className="text-muted-foreground">
+                  Dados detalhados de desempenho estão sendo carregados.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="strategy">
+            <Card>
+              <CardHeader>
+                <CardTitle>Detalhes da Estratégia</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center py-8">
+                <p className="text-muted-foreground">
+                  Informações sobre a estratégia serão atualizadas em breve.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* Copy Trading Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Copiar {trader.name}</DialogTitle>
-            <DialogDescription>
-              Defina o valor que você deseja investir para copiar as operações deste trader.
-            </DialogDescription>
-          </DialogHeader>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="investmentAmount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor do Investimento</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="$0.00" 
-                        value={field.value}
-                        onChange={(e) => handleInputChange(e, field)}
-                        className="text-lg"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Valor mínimo: $10.00
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="stopLoss"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stop Loss (opcional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="5%" 
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Defina uma % de perda máxima para encerrar automaticamente o copy trading
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter className="pt-4">
-                <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit">Confirmar</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
