@@ -1,13 +1,16 @@
 
 import { Card, CardContent } from "@/components/ui/card";
+import { VastCopyLogo } from "../logo/VastCopyLogo";
 
 export function WelcomeCard() {
   return (
-    <Card className="bg-gradient-to-br from-crypto-blue to-crypto-purple border-0 overflow-hidden">
+    <Card className="bg-gradient-to-br from-vastcopy-navy to-vastcopy-blue border-0 overflow-hidden">
       <CardContent className="p-6">
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-white">Bem-vindo ao CopyTrade Pro</h2>
-          <p className="text-white/90">
+          <div className="flex items-center">
+            <VastCopyLogo className="text-white" size="large" />
+          </div>
+          <p className="text-white/90 mt-2">
             Comece a copiar os melhores traders e ganhe bônus em vários níveis com nossa plataforma de Copy Trading.
           </p>
           <div className="bg-white/10 p-3 rounded-md backdrop-blur-sm">

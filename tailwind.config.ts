@@ -69,6 +69,13 @@ export default {
 					purple: '#8E33FF',
 					red: '#FF6370',
 					yellow: '#FFB800'
+				},
+				vastcopy: {
+					teal: '#40C4BD',
+					navy: '#0A263C',
+					blue: '#3A8DFF',
+					lightblue: '#60C2FF',
+					purple: '#A18EFF',
 				}
 			},
 			borderRadius: {
@@ -105,7 +112,8 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-				'gradient-trading': 'linear-gradient(to right, #3772ff, #8E33FF)'
+				'gradient-trading': 'linear-gradient(to right, var(--tw-gradient-stops))',
+				'vastcopy-gradient': 'linear-gradient(to right, #40C4BD, #3A8DFF, #A18EFF)'
 			}
 		}
 	},

@@ -1,108 +1,73 @@
 
-import { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { 
-  ChartBar, 
-  Coins, 
+  Home, 
   Users, 
-  BadgeDollarSign, 
-  Wallet, 
-  BadgePercent 
+  PieChart, 
+  Copy, 
+  Gift, 
+  BarChart, 
+  Settings,
+  Wallet
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-const navItems = [
-  {
-    title: "Dashboard",
-    href: "/",
-    icon: ChartBar,
-  },
-  {
-    title: "Master Traders",
-    href: "/traders",
-    icon: Users,
-  },
-  {
-    title: "My Portfolio",
-    href: "/portfolio",
-    icon: Wallet,
-  },
-  {
-    title: "Copy Trading",
-    href: "/copy-trading",
-    icon: Coins,
-  },
-  {
-    title: "Bonus Network",
-    href: "/bonus",
-    icon: BadgePercent,
-  },
-  {
-    title: "Earnings",
-    href: "/earnings",
-    icon: BadgeDollarSign,
-  }
-];
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { VastCopyLogo } from "../logo/VastCopyLogo";
 
 export function MainSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  
+  const isActive = (path: string) => location.pathname === path;
+  
+  const menuItems = [
+    { icon: Home, label: "Dashboard", path: "/" },
+    { icon: Users, label: "Traders", path: "/traders" },
+    { icon: PieChart, label: "Portfolio", path: "/portfolio" },
+    { icon: Copy, label: "Copy Trading", path: "/copy-trading" },
+    { icon: Gift, label: "Bônus", path: "/bonus" },
+    { icon: BarChart, label: "Ganhos", path: "/earnings" },
+    { icon: Wallet, label: "Carteira", path: "/wallet" },
+  ];
 
   return (
-    <aside
-      className={cn(
-        "bg-sidebar flex flex-col h-screen sticky top-0 transition-all duration-300 border-r border-border",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        {!collapsed && (
-          <div className="text-xl font-bold bg-gradient-trading bg-clip-text text-transparent">
-            CopyTrade Pro
-          </div>
-        )}
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto"
-        >
-          {collapsed ? "→" : "←"}
-        </Button>
+    <aside className="hidden md:flex h-screen w-64 flex-col bg-sidebar border-r border-sidebar-border">
+      <div className="p-6">
+        <VastCopyLogo />
       </div>
       
-      <nav className="flex-1 overflow-auto py-4">
-        <ul className="space-y-1 px-2">
-          {navItems.map((item) => (
-            <li key={item.href}>
-              <Link
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-                  location.pathname === item.href
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-secondary text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                {!collapsed && <span>{item.title}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <div className="mt-6 flex flex-col gap-1 px-2">
+        {menuItems.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                buttonVariants({ variant: "ghost" }),
+                "justify-start h-10",
+                active ? "bg-sidebar-primary/20 text-sidebar-primary" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-primary/10"
+              )}
+            >
+              <item.icon className="mr-2 h-5 w-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
       
-      <div className="p-4 border-t border-border">
-        {!collapsed ? (
-          <Button className="w-full" variant="outline">
-            Connect Wallet
-          </Button>
-        ) : (
-          <Button size="icon" variant="outline" className="w-full">
-            <Wallet className="h-4 w-4" />
-          </Button>
-        )}
+      <div className="mt-auto p-4">
+        <Link
+          to="/settings"
+          className={cn(
+            buttonVariants({ variant: "ghost" }),
+            "justify-start w-full",
+            isActive("/settings") ? "bg-sidebar-primary/20 text-sidebar-primary" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-primary/10"
+          )}
+        >
+          <Settings className="mr-2 h-5 w-5" />
+          Configurações
+        </Link>
       </div>
     </aside>
   );

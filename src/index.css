@@ -1,48 +1,47 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 220 30% 95%;
+    --foreground: 215 70% 15%;
 
-    --card: 222 47% 13%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 70% 15%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 70% 15%;
 
-    --primary: 221 83% 60%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 215 70% 15%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 10% 90%;
+    --muted-foreground: 215 25% 40%;
 
-    --accent: 265 100% 60%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 174 70% 45%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 224 76% 48%;
+    --border: 215 20% 85%;
+    --input: 215 20% 85%;
+    --ring: 215 70% 15%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 60%;
+    --sidebar-background: 215 70% 10%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 174 70% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 265 100% 60%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 224 76% 48%;
+    --sidebar-accent: 200 100% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 30% 20%;
+    --sidebar-ring: 174 70% 45%;
   }
 }
 
@@ -76,4 +75,8 @@
 
 .profit-negative {
   @apply text-crypto-red;
+}
+
+.gradient-line {
+  @apply h-1 bg-gradient-to-r from-accent via-blue-500 to-purple-400 rounded-full;
 }
