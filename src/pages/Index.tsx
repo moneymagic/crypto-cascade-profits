@@ -33,43 +33,19 @@ const Index = () => {
           navigate("/traders");
         }, 1000);
       } else {
-        // Se não há um usuário autenticado e já tentamos várias vezes, mostramos uma mensagem de erro
-        if (retryCount > 2) {
-          setAuthError(true);
-          setMessage("Não foi possível verificar sua autenticação. Por favor, faça login novamente.");
-          return;
-        }
+        // Se não há um usuário autenticado, redireciona para login
+        setRedirecting(true);
+        setDestination("/login");
+        setMessage("Você não está autenticado. Redirecionando para o login...");
+        console.log("Index: Usuário não autenticado, redirecionando para /login");
         
-        // Vamos verificar se há um token na URL (caso o usuário venha de um email de confirmação)
-        const url = new URL(window.location.href);
-        const accessToken = url.searchParams.get("access_token");
-        
-        if (accessToken) {
-          // Se houver um token de acesso na URL, espere mais tempo
-          setMessage("Processando autenticação...");
-          setTimeout(() => {
-            setRedirecting(true);
-            setDestination("/login");
-            setMessage("Redirecionando para o login...");
-            navigate("/login");
-          }, 3000);
-        } else {
-          // Incrementar o contador de tentativas
-          setRetryCount(prev => prev + 1);
-          
-          setRedirecting(true);
-          setDestination("/login");
-          setMessage("Você não está autenticado. Redirecionando para o login...");
-          console.log("Index: Usuário não autenticado, redirecionando para /login");
-          
-          // Adiciona um pequeno delay para mostrar a informação de redirecionamento
-          setTimeout(() => {
-            navigate("/login");
-          }, 1000);
-        }
+        // Adiciona um pequeno delay para mostrar a informação de redirecionamento
+        setTimeout(() => {
+          navigate("/login");
+        }, 1000);
       }
     }
-  }, [user, loading, navigate, retryCount]);
+  }, [user, loading, navigate]);
 
   // Manual retry option when there might be authentication issues
   const handleRetryLogin = () => {
