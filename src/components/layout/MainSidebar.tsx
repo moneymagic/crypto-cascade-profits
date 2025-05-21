@@ -20,7 +20,7 @@ export function MainSidebar() {
   const isActive = (path: string) => location.pathname === path;
   
   const menuItems = [
-    { icon: Home, label: "Dashboard", path: "/" },
+    { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: Users, label: "Traders", path: "/traders" },
     { icon: Copy, label: "Copy Trading", path: "/copy-trading" },
     { icon: WifiHigh, label: "Network", path: "/network" },

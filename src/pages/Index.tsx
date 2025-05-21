@@ -21,16 +21,16 @@ const Index = () => {
     if (!loading) {
       if (user) {
         setRedirecting(true);
-        setDestination("/traders");
+        setDestination("/dashboard");
         setMessage("Autenticação confirmada! Redirecionando para área restrita...");
-        console.log("Index: Usuário autenticado, redirecionando para /traders");
+        console.log("Index: Usuário autenticado, redirecionando para /dashboard");
         
         // Limpar qualquer estado de erro anterior
         setAuthError(false);
         
         // Adiciona um pequeno delay para mostrar a informação de redirecionamento
         setTimeout(() => {
-          navigate("/traders");
+          navigate("/dashboard");
         }, 1000);
       } else {
         // Se não há um usuário autenticado, redireciona para login

@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Index from '@/pages/Index';
 import NotFound from '@/pages/NotFound';
 import Traders from '@/pages/Traders';
+import Dashboard from '@/pages/Dashboard';
 import TraderProfile from '@/pages/TraderProfile';
 import Settings from '@/pages/Settings';
 import Wallet from '@/pages/Wallet';
@@ -55,12 +56,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Routes>
-          {/* Rotas públicas */}
+          {/* Rota principal redireciona para dashboard */}
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
           {/* Rotas protegidas */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/traders" element={<ProtectedRoute><Traders /></ProtectedRoute>} />
           <Route path="/trader/:traderId" element={<ProtectedRoute><TraderProfile /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
