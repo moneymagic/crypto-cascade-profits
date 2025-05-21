@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, Profile } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<Error | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,66 +41,85 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .single();
               
             const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil")), 3000);
+              setTimeout(() => reject(new Error("Tempo esgotado ao buscar perfil")), 8000);
             });
             
-            const { data: profile, error } = await Promise.race([
-              profilePromise,
-              timeoutPromise
-            ]) as any;
+            try {
+              const { data: profile, error } = await Promise.race([
+                profilePromise,
+                timeoutPromise
+              ]) as any;
 
-            if (error) {
-              console.error("Erro ao buscar perfil após evento:", error);
-              throw error;
-            }
-
-            if (!profile) {
-              console.error("Perfil não encontrado após evento de login para ID:", session.user.id);
-              
-              // Tentar criar um perfil básico automaticamente
-              try {
-                const { data: newProfile, error: createError } = await supabase
-                  .from("profiles")
-                  .insert({
-                    id: session.user.id,
-                    full_name: session.user.user_metadata?.full_name || "Usuário",
-                    email: session.user.email,
-                    created_at: new Date().toISOString(),
-                    balance: 0,
-                  })
-                  .select()
-                  .single();
-                  
-                if (createError) throw createError;
-                
-                console.log("Perfil criado automaticamente:", newProfile);
-                setUser(newProfile);
-              } catch (createError) {
-                console.error("Erro ao criar perfil automaticamente:", createError);
-                setUser(null);
+              if (error) {
+                console.error("Erro ao buscar perfil após evento:", error);
+                // Armazenar erro mas não rejeitar - não interromper o fluxo
+                setAuthError(error);
+                setLoading(false);
+                return;
               }
-              
-              setLoading(false);
-              return;
-            }
 
-            console.log("Perfil carregado após evento de login:", profile);
-            setUser(profile);
-            setLoading(false);
-            
-            // Não redirecione automaticamente aqui - deixe o componente Login lidar com isso
-            console.log("Usuário autenticado, aguardando componente Login redirecionar");
-          } catch (error) {
+              if (!profile) {
+                console.error("Perfil não encontrado após evento de login para ID:", session.user.id);
+                
+                // Tentar criar um perfil básico automaticamente
+                try {
+                  const { data: newProfile, error: createError } = await supabase
+                    .from("profiles")
+                    .insert({
+                      id: session.user.id,
+                      full_name: session.user.user_metadata?.full_name || "Usuário",
+                      email: session.user.email,
+                      created_at: new Date().toISOString(),
+                      balance: 0,
+                    })
+                    .select()
+                    .single();
+                    
+                  if (createError) {
+                    console.error("Erro ao criar perfil automaticamente:", createError);
+                    setAuthError(createError);
+                    setUser(null);
+                  } else {
+                    console.log("Perfil criado automaticamente:", newProfile);
+                    setUser(newProfile);
+                  }
+                } catch (createError: any) {
+                  console.error("Erro ao criar perfil automaticamente:", createError);
+                  setAuthError(createError);
+                  setUser(null);
+                }
+                
+                setLoading(false);
+                return;
+              }
+
+              console.log("Perfil carregado após evento de login:", profile);
+              setUser(profile);
+              setAuthError(null);
+            } catch (error: any) {
+              console.error("Erro ao carregar perfil após evento:", error);
+              toast.error("Erro ao carregar seu perfil", {
+                description: "Por favor, tente novamente"
+              });
+              
+              // Armazenar erro mas não redirecionar ou limpar usuário
+              setAuthError(error);
+              // Não definimos o usuário como null aqui, para prevenir redirecionamentos indesejados
+            }
+          } catch (error: any) {
             console.error("Erro ao carregar perfil após evento:", error);
             toast.error("Erro ao carregar seu perfil", {
               description: "Por favor, tente novamente"
             });
+            setAuthError(error);
+          } finally {
             setLoading(false);
           }
         } else if (event === "SIGNED_OUT") {
           // Usuário deslogou, limpar estado
           console.log("Usuário deslogado");
           setUser(null);
+          setAuthError(null);
           setLoading(false);
           
           // Redirecionar para login
@@ -130,68 +149,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session) {
         // Buscar dados do perfil
         console.log("Buscando perfil para usuário com ID:", session.user.id);
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
         
-        if (error) {
-          console.error("Erro ao buscar perfil na inicialização:", error);
-          throw error;
-        }
-        
-        if (!profile) {
-          console.error("Perfil não encontrado na inicialização para ID:", session.user.id);
-          // Criar um perfil básico para este usuário
-          try {
-            const { error: createError } = await supabase
-              .from("profiles")
-              .insert({
-                id: session.user.id,
-                full_name: session.user.user_metadata?.full_name || "Usuário",
-                email: session.user.email,
-                created_at: new Date().toISOString(),
-                balance: 0,
-              });
-              
-            if (createError) {
-              throw createError;
-            }
-            
-            // Buscar o perfil recém-criado
-            const { data: newProfile, error: fetchError } = await supabase
-              .from("profiles")
-              .select("*")
-              .eq("id", session.user.id)
-              .single();
-              
-            if (fetchError || !newProfile) {
-              throw fetchError || new Error("Falha ao buscar perfil recém-criado");
-            }
-            
-            setUser(newProfile);
-          } catch (createError) {
-            console.error("Erro ao criar perfil:", createError);
-            // Deslogar o usuário se não conseguir criar um perfil
-            await supabase.auth.signOut();
-            setUser(null);
+        try {
+          const { data: profile, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (error) {
+            console.error("Erro ao buscar perfil na inicialização:", error);
+            // Armazenar o erro mas continuar o fluxo
+            setAuthError(error);
+            // Não limpar o usuário para evitar redirecionamento incorreto
+            setLoading(false);
+            return;
           }
-        } else {
-          console.log("Perfil carregado na inicialização:", profile);
-          setUser(profile);
+          
+          if (!profile) {
+            console.error("Perfil não encontrado na inicialização para ID:", session.user.id);
+            // Criar um perfil básico para este usuário
+            try {
+              const { error: createError } = await supabase
+                .from("profiles")
+                .insert({
+                  id: session.user.id,
+                  full_name: session.user.user_metadata?.full_name || "Usuário",
+                  email: session.user.email,
+                  created_at: new Date().toISOString(),
+                  balance: 0,
+                });
+                
+              if (createError) {
+                throw createError;
+              }
+              
+              // Buscar o perfil recém-criado
+              const { data: newProfile, error: fetchError } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", session.user.id)
+                .single();
+                
+              if (fetchError || !newProfile) {
+                throw fetchError || new Error("Falha ao buscar perfil recém-criado");
+              }
+              
+              setUser(newProfile);
+              setAuthError(null);
+            } catch (createError: any) {
+              console.error("Erro ao criar perfil:", createError);
+              setAuthError(createError);
+              // Em caso de erro ao criar perfil, não vamos deslogar para dar chance de resolver
+              // apenas marcamos que não há usuário no contexto
+              setUser(null);
+            }
+          } else {
+            console.log("Perfil carregado na inicialização:", profile);
+            setUser(profile);
+            setAuthError(null);
+          }
+        } catch (error: any) {
+          console.error("Erro ao buscar perfil na inicialização:", error);
+          setAuthError(error);
+          // Não definimos o usuário como null para evitar redirecionamento indesejado
         }
         
         // Verificar a rota atual
         console.log("Rota atual:", window.location.pathname);
         
         // Se o usuário está autenticado e estamos na página de login, redirecionar
-        if (window.location.pathname === "/login") {
+        // Somente se não houver erro de autenticação
+        if (!authError && window.location.pathname === "/login") {
           console.log("Usuário já autenticado e está na página de login, redirecionando para /traders");
           navigate("/traders");
         }
       } else {
         console.log("Nenhuma sessão ativa encontrada");
+        setUser(null);
         // Redirecionar para login se estiver em uma rota protegida
         const currentPath = window.location.pathname;
         console.log("Verificando se precisa redirecionar da rota:", currentPath);
@@ -201,8 +236,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           navigate("/login");
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao verificar usuário:", error);
+      setAuthError(error);
     } finally {
       setLoading(false);
     }
@@ -392,8 +428,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const contextValue = {
+    user, 
+    loading, 
+    signIn, 
+    signUp, 
+    signOut
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

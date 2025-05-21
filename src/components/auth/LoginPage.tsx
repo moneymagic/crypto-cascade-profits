@@ -1,10 +1,38 @@
 
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VastCopyLogo } from "@/components/logo/VastCopyLogo";
 import { LoginForm } from "./LoginForm";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const LoginPage = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Se o usuário já está autenticado, redireciona para a página principal
+  useEffect(() => {
+    if (user && !loading) {
+      console.log("LoginPage: Usuário já autenticado, redirecionando para /traders");
+      navigate("/traders");
+    }
+  }, [user, loading, navigate]);
+
+  // Se estiver carregando, mostra um indicador de loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <VastCopyLogo className="mx-auto h-12 w-auto mb-4" />
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mt-4"></div>
+          <p className="mt-4 text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se não estiver logado, mostra o formulário de login
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
