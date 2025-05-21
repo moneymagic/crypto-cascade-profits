@@ -8,9 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
-import { FileText, Upload, Key } from "lucide-react";
+import { FileText, Upload, Key, TrendingUp } from "lucide-react";
 
 const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
   strategyName: z.string().min(3, {
     message: "Nome da estratégia deve ter pelo menos 3 caracteres.",
   }),
@@ -23,6 +26,15 @@ const formSchema = z.object({
   bio: z.string().min(10, {
     message: "A bio deve ter pelo menos 10 caracteres.",
   }),
+  winRate: z.string().regex(/^\d+%$/, {
+    message: "Win Rate deve estar no formato 'XX%'.",
+  }).optional().or(z.literal("")),
+  profit30d: z.string().regex(/^[+-]\d+(\.\d+)?%$/, {
+    message: "Lucro 30d deve estar no formato '+XX.X%' ou '-XX.X%'.",
+  }).optional().or(z.literal("")),
+  profit90d: z.string().regex(/^[+-]\d+(\.\d+)?%$/, {
+    message: "Lucro 90d deve estar no formato '+XX.X%' ou '-XX.X%'.",
+  }).optional().or(z.literal("")),
   photo: z.instanceof(File).optional(),
   additionalInfo: z.string().optional(),
 });
@@ -39,10 +51,14 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       strategyName: "",
       apiKey: "",
       apiSecret: "",
       bio: "",
+      winRate: "65%",
+      profit30d: "+15.0%",
+      profit90d: "+45.0%",
       additionalInfo: "",
     },
   });
@@ -67,13 +83,32 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
     } else {
       toast.success("Cadastro enviado com sucesso!");
     }
-    
-    // Here you would typically send the data to your backend
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome Completo</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Seu nome completo" 
+                  {...field} 
+                  className="max-w-md"
+                />
+              </FormControl>
+              <FormDescription>
+                Este será o nome exibido no seu perfil público.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="strategyName"
@@ -94,6 +129,74 @@ const MasterTraderForm = ({ onSubmit }: MasterTraderFormProps) => {
             </FormItem>
           )}
         />
+
+        <div className="grid gap-6 md:grid-cols-3">
+          <FormField
+            control={form.control}
+            name="winRate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Win Rate</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="65%" 
+                      className="pl-10" 
+                      {...field} 
+                    />
+                  </div>
+                </FormControl>
+                <FormDescription>Ex: 65%</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="profit30d"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lucro Últimos 30 dias</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="+15.0%" 
+                      className="pl-10" 
+                      {...field} 
+                    />
+                  </div>
+                </FormControl>
+                <FormDescription>Ex: +15.0% ou -5.0%</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="profit90d"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lucro Últimos 90 dias</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="+45.0%" 
+                      className="pl-10" 
+                      {...field} 
+                    />
+                  </div>
+                </FormControl>
+                <FormDescription>Ex: +45.0% ou -10.0%</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           <FormField

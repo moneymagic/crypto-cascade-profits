@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,6 +11,10 @@ import { toast } from "@/components/ui/use-toast";
 import MasterTraderForm from "@/components/settings/MasterTraderForm";
 import MasterTraderDashboard from "@/components/settings/MasterTraderDashboard";
 import { useSearchParams } from "react-router-dom";
+import { 
+  useTraderStore, 
+  masterTraderProfileToTraderData 
+} from "@/lib/traderStore";
 
 const Settings = () => {
   const [apiKey, setApiKey] = useState('');
@@ -23,6 +26,9 @@ const Settings = () => {
   const [isMasterTrader, setIsMasterTrader] = useState(false);
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('security');
+  
+  // Get trader store actions
+  const addTrader = useTraderStore(state => state.addTrader);
 
   useEffect(() => {
     // Check for tab param in URL
@@ -109,14 +115,33 @@ const Settings = () => {
     setConfirmPassword('');
   };
 
+  // For handling photo previews in the form
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
   // Handle master trader form submission
   const handleMasterTraderSubmit = (data) => {
     console.log("Submitted master trader application:", data);
-    // Simulate successful submission
+    
+    // Create a new trader profile for the trader store
+    const traderData = masterTraderProfileToTraderData({
+      name: data.name,
+      strategyName: data.strategyName,
+      bio: data.bio,
+      photoUrl: photoPreview ? photoPreview : "",
+      winRate: data.winRate || "65%",
+      profit30d: data.profit30d || "+15.0%",
+      profit90d: data.profit90d || "+45.0%"
+    });
+    
+    // Add the trader to the store
+    addTrader(traderData);
+    
+    // Save user data to localStorage
     localStorage.setItem('user_data', JSON.stringify({
       ...JSON.parse(localStorage.getItem('user_data') || '{}'),
       isMasterTrader: true,
-      masterTraderData: data
+      masterTraderData: data,
+      traderId: traderData.id
     }));
     
     setIsMasterTrader(true);
@@ -129,8 +154,14 @@ const Settings = () => {
   
   // Handle canceling master trader status
   const handleCancelMasterTrader = () => {
-    // Simulate canceling master trader status
+    // Get the current user data
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    
+    // If the user has a traderId, we could remove them from the store here
+    // This is optional - you might want to keep their profile in the system
+    // but mark it as inactive instead
+    
+    // Update localStorage
     userData.isMasterTrader = false;
     localStorage.setItem('user_data', JSON.stringify(userData));
     
