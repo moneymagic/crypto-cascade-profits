@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './components/ui/theme-provider';
@@ -24,30 +24,28 @@ import TraderProfile from './pages/TraderProfile';
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vastcopy-ui-theme">
-      <Router>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/copy-trading" element={<CopyTrading />} />
-            <Route path="/bybit-copy-trading" element={<BybitCopyTrading />} />
-            <Route path="/earnings" element={<Earnings />} />
-            <Route path="/wallet" element={<Wallet />} />
-            <Route path="/network" element={<Network />} />
-            <Route path="/bonus" element={<Bonus />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/trades" element={<Trades />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/become-master" element={<MasterTraderSignup />} />
-            <Route path="/traders" element={<Traders />} />
-            <Route path="/trader/:id" element={<TraderProfile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-        </AuthProvider>
-      </Router>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/copy-trading" element={<CopyTrading />} />
+          <Route path="/bybit-copy-trading" element={<BybitCopyTrading />} />
+          <Route path="/earnings" element={<Earnings />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/network" element={<Network />} />
+          <Route path="/bonus" element={<Bonus />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/trades" element={<Trades />} />
+          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/become-master" element={<MasterTraderSignup />} />
+          <Route path="/traders" element={<Traders />} />
+          <Route path="/trader/:id" element={<TraderProfile />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </AuthProvider>
     </ThemeProvider>
   );
 }
