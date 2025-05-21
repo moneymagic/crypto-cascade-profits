@@ -12,6 +12,8 @@ const Index = () => {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
+    console.log("Index: Verificando autenticação", { user, loading });
+    
     // Se o usuário não estiver autenticado e não estiver carregando,
     // redirecione para a página de login
     if (!user && !loading) {
@@ -19,8 +21,9 @@ const Index = () => {
       setIsRedirecting(true);
       navigate("/login");
     } else if (user) {
-      console.log("Index: Usuário autenticado, redirecionando para /traders");
+      console.log("Index: Usuário autenticado:", user.id, "redirecionando para /traders");
       // Sendo consistente com a aplicação, redirecionar para /traders quando estiver na página inicial
+      setIsRedirecting(true);
       navigate("/traders");
     }
   }, [user, loading, navigate]);

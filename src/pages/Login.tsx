@@ -47,8 +47,26 @@ const Login = () => {
       console.log("Iniciando processo de login...");
       console.log("Tentando fazer login com:", data.email);
       
-      // Primeiro, vamos verificar se o usuário existe no auth do Supabase
-      console.log("Verificando credenciais de autenticação...");
+      // Verificar se o e-mail existe no Supabase Auth
+      console.log("Verificando se o e-mail existe...");
+      const { data: existingUsers, error: existingError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("email", data.email)
+        .maybeSingle();
+        
+      if (existingError) {
+        console.error("Erro ao verificar e-mail:", existingError);
+      }
+      
+      if (!existingUsers) {
+        console.log("E-mail não encontrado no sistema:", data.email);
+        setLoginError("E-mail não cadastrado. Por favor, verifique ou crie uma conta.");
+        setLoading(false);
+        return;
+      }
+      
+      console.log("E-mail encontrado, verificando credenciais de autenticação...");
       
       // Tentativa direta de autenticação para capturar erros específicos
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -119,6 +137,9 @@ const Login = () => {
         console.log("Perfil criado com sucesso para:", authData.user.id);
       } else if (profileError) {
         console.error("Erro ao verificar perfil:", profileError);
+        setLoginError("Erro ao verificar perfil. Por favor, tente novamente.");
+        setLoading(false);
+        return;
       } else {
         console.log("Perfil encontrado:", profileData);
       }
@@ -126,18 +147,24 @@ const Login = () => {
       // Neste ponto, a autenticação foi bem-sucedida e temos um perfil
       console.log("Login totalmente processado com sucesso!");
       
-      // Chamar signIn para atualizar o estado global da aplicação
-      console.log("Chamando signIn para atualizar contexto de autenticação...");
-      await signIn(data.email, data.password);
-      
-      toast.success("Login realizado com sucesso!");
-      console.log("Redirecionando para /traders em 1 segundo...");
-      
-      // Atraso maior para garantir que todas as operações assíncronas foram concluídas
-      setTimeout(() => {
-        console.log("Executando redirecionamento para /traders");
-        navigate("/traders");
-      }, 1000);
+      try {
+        // Chamar signIn para atualizar o estado global da aplicação
+        console.log("Chamando signIn para atualizar contexto de autenticação...");
+        await signIn(data.email, data.password);
+        
+        toast.success("Login realizado com sucesso!");
+        console.log("Redirecionando para /traders em 1 segundo...");
+        
+        // Atraso maior para garantir que todas as operações assíncronas foram concluídas
+        setTimeout(() => {
+          console.log("Executando redirecionamento para /traders");
+          navigate("/traders");
+        }, 1000);
+      } catch (signInError: any) {
+        console.error("Erro ao fazer signIn no contexto:", signInError);
+        setLoginError("Erro ao finalizar o processo de login. Por favor, tente novamente.");
+        setLoading(false);
+      }
       
     } catch (error: any) {
       console.error("Erro não tratado ao fazer login:", error);
@@ -150,7 +177,6 @@ const Login = () => {
       } else {
         setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
       }
-    } finally {
       setLoading(false);
     }
   }
