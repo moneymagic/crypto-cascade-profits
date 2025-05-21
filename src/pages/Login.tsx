@@ -46,45 +46,83 @@ const Login = () => {
       
       console.log("Iniciando processo de login...");
       
-      // Verificar se o e-mail existe
-      const { data: existingUser, error: existingError } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("email", data.email)
-        .maybeSingle();
+      // Verificar se o e-mail existe com um timeout para evitar travamentos
+      const checkEmailPromise = new Promise<any>(async (resolve, reject) => {
+        try {
+          const { data: existingUser, error: existingError } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("email", data.email)
+            .maybeSingle();
+          
+          resolve({ existingUser, existingError });
+        } catch (error) {
+          reject(error);
+        }
+      });
       
-      if (existingError) {
-        console.error("Erro ao verificar existência de e-mail:", existingError);
-      }
-      
-      if (!existingUser) {
-        console.log("E-mail não encontrado:", data.email);
-        setLoginError("E-mail não cadastrado. Por favor, verifique ou crie uma conta.");
-        setLoading(false);
-        return;
-      }
-      
-      console.log("E-mail encontrado, verificando credenciais...");
+      // Configurar um timeout de 5 segundos
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Tempo esgotado ao verificar o e-mail")), 5000);
+      });
       
       try {
-        // Chamar signIn para autenticar
-        await signIn(data.email, data.password);
+        // Usar Promise.race para implementar um timeout
+        const { existingUser, existingError } = await Promise.race([
+          checkEmailPromise,
+          timeoutPromise
+        ]) as any;
         
-        toast.success("Login realizado com sucesso!");
+        if (existingError) {
+          console.error("Erro ao verificar existência de e-mail:", existingError);
+          throw existingError;
+        }
         
-        // Redirecionar para /traders após sucesso
-        console.log("Login bem-sucedido, redirecionando para /traders");
-        navigate("/traders");
+        if (!existingUser) {
+          console.log("E-mail não encontrado:", data.email);
+          setLoginError("E-mail não cadastrado. Por favor, verifique ou crie uma conta.");
+          setLoading(false);
+          return;
+        }
+        
+        console.log("E-mail encontrado, verificando credenciais...");
+        
+        // Chamar signIn para autenticar com timeout
+        const signInPromise = signIn(data.email, data.password);
+        const signInWithTimeout = Promise.race([
+          signInPromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Tempo esgotado ao fazer login")), 8000)
+          )
+        ]);
+        
+        try {
+          await signInWithTimeout;
+          
+          toast.success("Login realizado com sucesso!");
+          
+          // Redirecionar para /traders após sucesso
+          console.log("Login bem-sucedido, redirecionando para /traders");
+          navigate("/traders");
+        } catch (error: any) {
+          console.error("Erro ao fazer login:", error);
+          
+          if (error.message?.includes("Invalid login credentials")) {
+            setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
+          } else if (error.message?.includes("Email not confirmed")) {
+            setEmailNotConfirmed(true);
+            setEmailForResend(data.email);
+          } else if (error.message?.includes("Tempo esgotado")) {
+            setLoginError("O login está demorando muito. Por favor, tente novamente.");
+          } else {
+            setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
+          }
+        }
       } catch (error: any) {
-        console.error("Erro ao fazer login:", error);
-        
-        if (error.message?.includes("Invalid login credentials")) {
-          setLoginError("E-mail ou senha incorretos. Verifique suas credenciais.");
-        } else if (error.message?.includes("Email not confirmed")) {
-          setEmailNotConfirmed(true);
-          setEmailForResend(data.email);
+        if (error.message?.includes("Tempo esgotado")) {
+          setLoginError("A verificação do e-mail está demorando muito. Por favor, tente novamente.");
         } else {
-          setLoginError(error.message || "Erro ao fazer login. Por favor, tente novamente.");
+          setLoginError("Erro ao verificar suas credenciais. Por favor, tente novamente.");
         }
       }
     } catch (error: any) {
