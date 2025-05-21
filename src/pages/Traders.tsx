@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/Dashboard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTraderStore, TraderData } from "@/lib/traderStore";
@@ -28,20 +28,27 @@ const Traders = () => {
     const sorted = [...filtered].sort((a, b) => {
       switch (sortType) {
         case "profit30d":
-          return parseFloat(a.profit30d) > parseFloat(b.profit30d) ? -1 : 1;
+          return parseFloat(String(a.profit30d).replace(/%|\+/g, "")) > 
+                 parseFloat(String(b.profit30d).replace(/%|\+/g, "")) ? -1 : 1;
         case "profit90d":
-          return parseFloat(a.profit90d) > parseFloat(b.profit90d) ? -1 : 1;
+          return parseFloat(String(a.profit90d).replace(/%|\+/g, "")) > 
+                 parseFloat(String(b.profit90d).replace(/%|\+/g, "")) ? -1 : 1;
         case "followers":
-          // Convert K notation to numbers for proper sorting
-          const followersA = a.followers.includes("K")
+          // Handle both string and number formats for followers
+          const followersA = typeof a.followers === 'string' && a.followers.includes("K")
             ? parseFloat(a.followers.replace("K", "")) * 1000
-            : parseFloat(a.followers);
-          const followersB = b.followers.includes("K")
+            : typeof a.followers === 'string' 
+              ? parseFloat(a.followers) 
+              : a.followers;
+          const followersB = typeof b.followers === 'string' && b.followers.includes("K")
             ? parseFloat(b.followers.replace("K", "")) * 1000
-            : parseFloat(b.followers);
-          return followersB - followersA;
+            : typeof b.followers === 'string' 
+              ? parseFloat(b.followers) 
+              : b.followers;
+          return Number(followersB) - Number(followersA);
         case "winRate":
-          return parseFloat(a.winRate) > parseFloat(b.winRate) ? -1 : 1;
+          return parseFloat(String(a.winRate).replace(/%/g, "")) > 
+                 parseFloat(String(b.winRate).replace(/%/g, "")) ? -1 : 1;
         default:
           return 0;
       }

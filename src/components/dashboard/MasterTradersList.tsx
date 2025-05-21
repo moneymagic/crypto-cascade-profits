@@ -18,8 +18,8 @@ export function MasterTradersList() {
     return [...allTraders]
       .sort((a, b) => {
         // Sort by profit30d (descending)
-        const profitA = parseFloat(a.profit30d.replace(/%/g, ""));
-        const profitB = parseFloat(b.profit30d.replace(/%/g, ""));
+        const profitA = parseFloat(String(a.profit30d).replace(/%|\+/g, ""));
+        const profitB = parseFloat(String(b.profit30d).replace(/%|\+/g, ""));
         return profitB - profitA;
       })
       .slice(0, 4); // Take only the first 4 traders

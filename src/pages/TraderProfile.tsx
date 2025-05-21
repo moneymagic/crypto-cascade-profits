@@ -1,3 +1,4 @@
+
 import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/Dashboard";
@@ -32,118 +33,7 @@ import { toast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
-// Mock data for a trader
-const traders = [
-  {
-    id: "1",
-    name: "Carlos Almeida",
-    avatar: "",
-    winRate: "78%",
-    followers: 1200,
-    profit30d: "+32.5%",
-    profit90d: "+87.3%",
-    profit180d: "+145.2%",
-    positive: true,
-    verified: true,
-    specialization: "BTC/ETH",
-    bio: "Trader especializado em Bitcoin e Ethereum com mais de 5 anos de experiência. Minha estratégia combina análise técnica com fundamentos macroeconômicos para maximizar resultados em mercados voláteis.",
-    rank: 1,
-    totalTrades: 852,
-    successfulTrades: 665,
-    averageProfit: "3.8%",
-  },
-  {
-    id: "2",
-    name: "Daniela Santos",
-    avatar: "",
-    winRate: "67%",
-    followers: 856,
-    profit30d: "+18.3%",
-    profit90d: "+52.8%",
-    profit180d: "+98.6%",
-    positive: true,
-    verified: true,
-    specialization: "Altcoins",
-    bio: "Foco em altcoins com potencial de crescimento e análise fundamentalista. Utilizo indicadores on-chain e análise de sentimento para identificar oportunidades antes do mercado.",
-    rank: 3,
-    totalTrades: 721,
-    successfulTrades: 483,
-    averageProfit: "4.2%",
-  },
-  {
-    id: "3",
-    name: "Fernando Costa",
-    avatar: "",
-    winRate: "72%",
-    followers: 943,
-    profit30d: "+24.7%",
-    profit90d: "+61.5%",
-    profit180d: "+103.8%",
-    positive: true,
-    verified: false,
-    specialization: "NFT Tokens",
-    bio: "Especialista em tokens relacionados ao mercado de NFT e metaverso. Minha abordagem identifica projetos promissores antes de ganharem popularidade no mercado.",
-    rank: 5,
-    totalTrades: 632,
-    successfulTrades: 455,
-    averageProfit: "3.5%",
-  },
-  {
-    id: "4",
-    name: "Márcia Oliveira",
-    avatar: "",
-    winRate: "81%",
-    followers: 2500,
-    profit30d: "+41.2%",
-    profit90d: "+105.7%",
-    profit180d: "+186.3%",
-    positive: true,
-    verified: true,
-    specialization: "DeFi",
-    bio: "Estratégias em DeFi, yield farming e staking com resultados consistentes. Desenvolvi um sistema proprietário para avaliar e maximizar rendimentos em diferentes protocolos.",
-    rank: 2,
-    totalTrades: 964,
-    successfulTrades: 781,
-    averageProfit: "4.5%",
-  },
-  {
-    id: "5",
-    name: "Roberto Mendes",
-    avatar: "",
-    winRate: "64%",
-    followers: 721,
-    profit30d: "+15.8%",
-    profit90d: "+37.2%",
-    profit180d: "+72.6%",
-    positive: true,
-    verified: false,
-    specialization: "Swing Trading",
-    bio: "Trader de swing trading com base em análise técnica e indicadores. Minha estratégia foi desenvolvida após 7 anos de experiência em mercados tradicionais e criptomoedas.",
-    rank: 7,
-    totalTrades: 528,
-    successfulTrades: 338,
-    averageProfit: "3.1%",
-  },
-  {
-    id: "6",
-    name: "Ana Clara Silva",
-    avatar: "",
-    winRate: "75%",
-    followers: 1100,
-    profit30d: "+28.2%",
-    profit90d: "+71.9%",
-    profit180d: "+132.4%",
-    positive: true,
-    verified: true,
-    specialization: "Scalping",
-    bio: "Especialista em scalping com operações de curta duração e alto volume. Minha técnica permite capturar pequenas variações com consistência.",
-    rank: 4,
-    totalTrades: 1450,
-    successfulTrades: 1087,
-    averageProfit: "1.8%",
-  }
-];
+import { useTraderStore } from "@/lib/traderStore";
 
 // Mock data for past operations
 const pastOperations = [
@@ -198,8 +88,11 @@ const TraderProfile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   
+  // Get all traders from the trader store
+  const allTraders = useTraderStore((state) => state.traders);
+  
   // Find trader data based on URL parameter
-  const trader = traders.find(t => t.id === traderId);
+  const trader = allTraders.find(t => t.id === traderId);
   
   // Form for copy trading investment
   const form = useForm<z.infer<typeof formSchema>>({
@@ -223,6 +116,17 @@ const TraderProfile = () => {
       </DashboardLayout>
     );
   }
+  
+  // Extended trader data for the profile view
+  const extendedTrader = {
+    ...trader,
+    bio: trader.description || "Sem biografia disponível",
+    profit180d: trader.profit90d ? `${parseFloat(trader.profit90d) * 2}%` : "+0%",
+    rank: 1,
+    totalTrades: 852,
+    successfulTrades: 665,
+    averageProfit: "3.8%",
+  };
   
   const toggleFollow = () => {
     setDialogOpen(true);
@@ -321,19 +225,19 @@ const TraderProfile = () => {
                     <div className="text-xs text-muted-foreground">30 dias</div>
                   </div>
                   <div>
-                    <div className="font-medium text-2xl">{trader.followers.toLocaleString()}</div>
+                    <div className="font-medium text-2xl">{typeof trader.followers === 'number' ? trader.followers.toLocaleString() : trader.followers}</div>
                     <div className="text-xs text-muted-foreground">Seguidores</div>
                   </div>
                 </div>
                 
                 <div className="w-full text-left">
                   <h3 className="font-semibold mb-1">Bio</h3>
-                  <p className="text-sm text-muted-foreground">{trader.bio}</p>
+                  <p className="text-sm text-muted-foreground">{extendedTrader.bio}</p>
                 </div>
                 
                 <div className="flex items-center gap-2 text-muted-foreground text-sm w-full justify-start">
                   <Award className="h-4 w-4 text-yellow-500" />
-                  <span>Ranking #{trader.rank} entre traders</span>
+                  <span>Ranking #{extendedTrader.rank} entre traders</span>
                 </div>
               </div>
             </CardContent>
@@ -376,7 +280,7 @@ const TraderProfile = () => {
                         <CardContent className="pt-6">
                           <div className="text-center">
                             <TrendingUp className="h-8 w-8 mx-auto text-crypto-green mb-2" />
-                            <div className="text-2xl font-semibold text-crypto-green">{trader.profit180d}</div>
+                            <div className="text-2xl font-semibold text-crypto-green">{extendedTrader.profit180d}</div>
                             <p className="text-xs text-muted-foreground">Últimos 180 dias</p>
                           </div>
                         </CardContent>
@@ -402,7 +306,7 @@ const TraderProfile = () => {
                       <CardContent className="pt-6">
                         <div className="text-center">
                           <Activity className="h-8 w-8 mx-auto text-primary mb-2" />
-                          <div className="text-2xl font-semibold">{trader.totalTrades}</div>
+                          <div className="text-2xl font-semibold">{extendedTrader.totalTrades}</div>
                           <p className="text-xs text-muted-foreground">Total de Operações</p>
                         </div>
                       </CardContent>
@@ -412,7 +316,7 @@ const TraderProfile = () => {
                       <CardContent className="pt-6">
                         <div className="text-center">
                           <Activity className="h-8 w-8 mx-auto text-crypto-green mb-2" />
-                          <div className="text-2xl font-semibold">{trader.successfulTrades}</div>
+                          <div className="text-2xl font-semibold">{extendedTrader.successfulTrades}</div>
                           <p className="text-xs text-muted-foreground">Operações Lucrativas</p>
                         </div>
                       </CardContent>
@@ -422,7 +326,7 @@ const TraderProfile = () => {
                       <CardContent className="pt-6">
                         <div className="text-center">
                           <TrendingUp className="h-8 w-8 mx-auto text-crypto-green mb-2" />
-                          <div className="text-2xl font-semibold text-crypto-green">{trader.averageProfit}</div>
+                          <div className="text-2xl font-semibold text-crypto-green">{extendedTrader.averageProfit}</div>
                           <p className="text-xs text-muted-foreground">Lucro Médio/Operação</p>
                         </div>
                       </CardContent>
