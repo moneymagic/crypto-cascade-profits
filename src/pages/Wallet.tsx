@@ -111,7 +111,7 @@ const Wallet = () => {
               
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Gas Fee Disponível</CardTitle>
+                  <CardTitle className="text-lg">Saldo Retido</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">$454.80</div>
@@ -194,15 +194,15 @@ const Wallet = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Informações de Gas Fee</CardTitle>
+            <CardTitle>Informações de Saldo Retido</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="bg-muted/50 p-4 rounded-lg flex gap-3 items-start">
               <Info className="h-5 w-5 text-vastcopy-blue mt-0.5" />
               <div>
-                <h4 className="font-medium mb-1">Como funciona o Gas Fee</h4>
+                <h4 className="font-medium mb-1">Como funciona o Saldo Retido</h4>
                 <p className="text-sm text-muted-foreground">
-                  O Gas Fee é uma taxa pré-paga que é utilizada para cobrir as taxas de copy trading. 
+                  O Saldo Retido é uma quantia pré-paga que é utilizada para cobrir as taxas de copy trading. 
                   Quando um trader que você segue gera lucro, uma porcentagem é retida como taxa até o final da semana. 
                   Se o trader tiver prejuízo após ter lucro, o valor retido é devolvido proporcionalmente. 
                   As taxas são liquidadas semanalmente, aos domingos.
@@ -212,7 +212,7 @@ const Wallet = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
-                <h3 className="font-medium mb-3">Gas Fee por Trader</h3>
+                <h3 className="font-medium mb-3">Saldo Retido por Trader</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 border rounded-md">
                     <div className="flex gap-2">
@@ -226,7 +226,7 @@ const Wallet = () => {
                     </div>
                     <div className="text-right">
                       <div className="font-medium">$125.00</div>
-                      <div className="text-xs text-muted-foreground">Gas Fee reservado</div>
+                      <div className="text-xs text-muted-foreground">Saldo retido</div>
                     </div>
                   </div>
                   
@@ -242,14 +242,14 @@ const Wallet = () => {
                     </div>
                     <div className="text-right">
                       <div className="font-medium">$150.00</div>
-                      <div className="text-xs text-muted-foreground">Gas Fee reservado</div>
+                      <div className="text-xs text-muted-foreground">Saldo retido</div>
                     </div>
                   </div>
                 </div>
               </div>
               
               <div>
-                <h3 className="font-medium mb-3">Gas Fee Recomendado</h3>
+                <h3 className="font-medium mb-3">Saldo Retido Recomendado</h3>
                 <Card className="bg-gradient-to-br from-vastcopy-navy/95 to-vastcopy-blue/95 border-0 text-white">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center mb-3">
@@ -258,11 +258,11 @@ const Wallet = () => {
                     </div>
                     <p className="text-sm text-white/80 mb-4">
                       Com base no seu volume atual de copy trading e número de traders seguidos,
-                      recomendamos manter este valor em gas fee para operações sem interrupções.
+                      recomendamos manter este valor em saldo retido para operações sem interrupções.
                     </p>
                     <Button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm">
                       <CreditCard className="mr-2 h-4 w-4" />
-                      Ajustar Gas Fee
+                      Ajustar Saldo Retido
                     </Button>
                   </CardContent>
                 </Card>
