@@ -91,7 +91,7 @@ export function MasterTradersList() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <div className="text-right">
                   <div className={`font-semibold ${trader.positive ? 'text-crypto-green' : 'text-crypto-red'}`}>
                     {trader.profit30d}
@@ -100,11 +100,13 @@ export function MasterTradersList() {
                     Win rate: {trader.winRate}
                   </div>
                 </div>
-                <Link to={`/trader/${trader.id}`}>
-                  <Button variant="ghost" size="sm">
-                    Ver
-                  </Button>
-                </Link>
+                <div className="flex justify-center">
+                  <Link to={`/trader/${trader.id}`}>
+                    <Button variant="ghost" size="sm">
+                      Ver
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/Dashboard";
@@ -169,11 +168,10 @@ const Traders = () => {
                   {trader.description}
                 </div>
                 
-                <div className="flex items-center justify-between mt-6">
+                <div className="flex items-center justify-center mt-6">
                   <Link to={`/trader/${trader.id}`}>
-                    <Button variant="outline" size="sm">Ver perfil</Button>
+                    <Button size="sm">Ver perfil</Button>
                   </Link>
-                  <Button size="sm">Copiar Trader</Button>
                 </div>
               </CardContent>
             </Card>
