@@ -10,6 +10,7 @@ interface RankingInfo {
   bonusRate: string;
   requiredProfit: string;
   requiredReferrals: string;
+  networkBonusPercent: string;
 }
 
 const rankings: RankingInfo[] = [
@@ -17,49 +18,57 @@ const rankings: RankingInfo[] = [
     rank: "V1",
     bonusRate: "4%",
     requiredProfit: "Cadastro",
-    requiredReferrals: "Nenhum"
+    requiredReferrals: "Nenhum",
+    networkBonusPercent: "2%"
   },
   {
     rank: "V2",
     bonusRate: "5%",
     requiredProfit: "$1.000",
-    requiredReferrals: "Nenhum"
+    requiredReferrals: "Nenhum",
+    networkBonusPercent: "2%"
   },
   {
     rank: "V3",
     bonusRate: "6%",
     requiredProfit: "$3.000",
-    requiredReferrals: "2 indicados V2"
+    requiredReferrals: "2 indicados V2",
+    networkBonusPercent: "2%"
   },
   {
     rank: "V4",
     bonusRate: "7%",
     requiredProfit: "$10.000",
-    requiredReferrals: "2 indicados V3"
+    requiredReferrals: "2 indicados V3",
+    networkBonusPercent: "2%"
   },
   {
     rank: "V5",
     bonusRate: "8%",
     requiredProfit: "$30.000",
-    requiredReferrals: "3 indicados V4"
+    requiredReferrals: "3 indicados V4",
+    networkBonusPercent: "2%"
   },
   {
     rank: "V6",
     bonusRate: "9%",
     requiredProfit: "$100.000",
-    requiredReferrals: "3 indicados V5"
+    requiredReferrals: "3 indicados V5",
+    networkBonusPercent: "2%"
   },
   {
     rank: "V7",
     bonusRate: "10%",
     requiredProfit: "$300.000",
-    requiredReferrals: "3 indicados V6"
+    requiredReferrals: "3 indicados V6",
+    networkBonusPercent: "4%"
   },
   {
     rank: "V8",
     bonusRate: "11%",
     requiredProfit: "$1.000.000",
-    requiredReferrals: "3 indicados V7"
+    requiredReferrals: "3 indicados V7",
+    networkBonusPercent: "4%"
   }
 ];
 
@@ -74,9 +83,10 @@ export function MultiLevelBonus() {
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
         <Tabs defaultValue="how-it-works">
-          <TabsList className="mb-4 grid grid-cols-2">
+          <TabsList className="mb-4 grid grid-cols-3">
             <TabsTrigger value="how-it-works">Como Funciona</TabsTrigger>
             <TabsTrigger value="table-ranks">Tabela de Rankings</TabsTrigger>
+            <TabsTrigger value="reward-difference">Diferença de Ranking</TabsTrigger>
           </TabsList>
           
           <TabsContent value="how-it-works">
@@ -189,6 +199,23 @@ export function MultiLevelBonus() {
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       <div className="flex items-center gap-1">
+                        Participação na Rede
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="w-[200px] text-xs">
+                                Sua participação nos 20% do bônus da rede
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      <div className="flex items-center gap-1">
                         Lucro Total na Rede
                         <TooltipProvider>
                           <Tooltip>
@@ -238,6 +265,7 @@ export function MultiLevelBonus() {
                         </div>
                       </td>
                       <td className="px-4 py-3">{rank.bonusRate}</td>
+                      <td className="px-4 py-3">{rank.networkBonusPercent}</td>
                       <td className="px-4 py-3">{rank.requiredProfit}</td>
                       <td className="px-4 py-3">{rank.requiredReferrals}</td>
                     </tr>
@@ -249,6 +277,138 @@ export function MultiLevelBonus() {
             <div className="mt-4 p-3 bg-muted/30 rounded-md text-sm text-muted-foreground">
               <strong>Nota:</strong> Para avançar para o próximo ranking, você precisa cumprir AMBOS os requisitos: 
               lucro total na rede E ter a quantidade necessária de indicados diretos com o ranking especificado.
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="reward-difference">
+            <div className="space-y-4">
+              <div className="p-4 bg-secondary/20 rounded-lg space-y-4">
+                <h3 className="font-semibold mb-2">Recompensa por Diferença de Ranking</h3>
+                <p className="text-sm">
+                  Este sistema permite que você ganhe comissões com base na diferença entre o seu ranking e o 
+                  ranking dos afiliados em sua rede. Este modelo não limita a quantidade de níveis onde você 
+                  pode ganhar, apenas o ranking dos afiliados abaixo de você.
+                </p>
+                
+                <div className="bg-background p-4 rounded-md mt-3 border border-border">
+                  <h4 className="font-medium text-sm mb-3">Como os 20% do bônus da rede são distribuídos:</h4>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="py-2 text-left">Ranking</th>
+                          <th className="py-2 text-left">% do Bônus</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-border">
+                          <td className="py-2">V1</td>
+                          <td className="py-2">2%</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-2">V2</td>
+                          <td className="py-2">2%</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-2">V3</td>
+                          <td className="py-2">2%</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-2">V4</td>
+                          <td className="py-2">2%</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-2">V5</td>
+                          <td className="py-2">2%</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-2">V6</td>
+                          <td className="py-2">2%</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-2">V7</td>
+                          <td className="py-2">4%</td>
+                        </tr>
+                        <tr className="border-b border-border">
+                          <td className="py-2">V8</td>
+                          <td className="py-2">4%</td>
+                        </tr>
+                        <tr className="font-medium bg-muted/20">
+                          <td className="py-2">Total</td>
+                          <td className="py-2">20%</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div className="mt-6 bg-vastcopy-purple/10 border border-vastcopy-purple/30 p-4 rounded-md">
+                  <h4 className="font-medium text-vastcopy-purple mb-2">Exemplo de Ganhos:</h4>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-white/50 p-3 rounded-md border border-border">
+                      <p className="text-sm mb-2"><span className="font-medium">Cenário:</span></p>
+                      <ul className="list-disc list-inside text-sm space-y-1">
+                        <li>Você é V8 (topo da hierarquia)</li>
+                        <li>Abaixo de você está Maria (V5)</li>
+                        <li>Maria tem seguidores gerando lucro</li>
+                      </ul>
+                      
+                      <div className="mt-3 border-t border-border pt-3">
+                        <p className="text-sm mb-2"><span className="font-medium">Ganho por diferença de ranking:</span></p>
+                        <p className="text-sm">
+                          Como você é V8 e Maria é V5, a diferença entre vocês é de 3 níveis (V6, V7, V8).
+                        </p>
+                        <p className="text-sm mt-2">Você recebe:</p>
+                        <ul className="list-disc list-inside text-sm space-y-1 ml-2">
+                          <li>V6: 2%</li>
+                          <li>V7: 4%</li>
+                          <li>V8: 4%</li>
+                        </ul>
+                        <p className="text-sm font-medium mt-2">
+                          Total: 10% sobre os lucros gerados pela rede de Maria.
+                        </p>
+                        
+                        <p className="text-sm mt-3">
+                          Maria recebe os 10% correspondentes aos níveis V1 a V5, e você recebe 
+                          os 10% restantes. Isso é a recompensa por diferença de ranking.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-vastcopy-navy/10 p-3 rounded-md border border-vastcopy-navy/30">
+                      <h5 className="font-medium text-sm mb-2 text-vastcopy-navy">Limite não é profundidade, é RANKING</h5>
+                      <p className="text-sm">
+                        Você não é limitado pela quantidade de níveis na sua rede, apenas pelo ranking dos 
+                        afiliados abaixo de você. Mesmo que um afiliado esteja no 20º nível abaixo de você, 
+                        se ele for V2 e você for V8, você ainda recebe a diferença entre o seu ranking e o dele.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <h4 className="font-medium mb-2">Vantagens desse Modelo</h4>
+                  <ul className="list-disc list-inside text-sm space-y-2">
+                    <li>
+                      <span className="font-medium">Estimula liderança ativa</span> – você só ganha 
+                      diferença se for mais graduado que seus indicados.
+                    </li>
+                    <li>
+                      <span className="font-medium">Premia mérito</span> – quem se esforça para subir 
+                      de ranking garante participação maior nos lucros.
+                    </li>
+                    <li>
+                      <span className="font-medium">Incentiva ajudar a rede</span> – você tem interesse 
+                      em fazer os indicados crescerem, mas não tanto a ponto de te igualarem.
+                    </li>
+                    <li>
+                      <span className="font-medium">Distribuição justa</span> – o bônus nunca ultrapassa 
+                      os 20% da rede, mesmo com infinitos níveis.
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
