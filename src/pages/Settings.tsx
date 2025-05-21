@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Shield, Key, Lock, UserPlus, Wallet, BarChart } from "lucide-react";
 import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import MasterTraderForm from "@/components/settings/MasterTraderForm";
 import MasterTraderDashboard from "@/components/settings/MasterTraderDashboard";
 import { useSearchParams } from "react-router-dom";
@@ -59,11 +59,7 @@ const Settings = () => {
 
   const handleApiSave = () => {
     if (!apiKey || !apiSecret) {
-      toast({
-        title: "Erro",
-        description: "API Key e Secret são obrigatórios",
-        variant: "destructive"
-      });
+      toast.error("API Key e Secret são obrigatórios");
       return;
     }
 
@@ -72,43 +68,29 @@ const Settings = () => {
     localStorage.setItem("bybit_apiSecret", apiSecret);
     localStorage.setItem("bybit_testnet", String(isTestnet));
     
-    toast({
-      title: "Configurações Salvas",
+    toast.success("Configurações Salvas", {
       description: "Suas configurações de API foram salvas com sucesso."
     });
   };
 
   const handlePasswordChange = () => {
     if (!currentPassword) {
-      toast({
-        title: "Erro",
-        description: "Senha atual é obrigatória",
-        variant: "destructive"
-      });
+      toast.error("Senha atual é obrigatória");
       return;
     }
 
     if (!newPassword || newPassword.length < 8) {
-      toast({
-        title: "Erro",
-        description: "Nova senha deve ter pelo menos 8 caracteres",
-        variant: "destructive"
-      });
+      toast.error("Nova senha deve ter pelo menos 8 caracteres");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "As novas senhas não coincidem",
-        variant: "destructive"
-      });
+      toast.error("As novas senhas não coincidem");
       return;
     }
 
     // Mock password change success
-    toast({
-      title: "Senha Alterada",
+    toast.success("Senha Alterada", {
       description: "Sua senha foi alterada com sucesso."
     });
     
@@ -147,8 +129,7 @@ const Settings = () => {
     
     setIsMasterTrader(true);
     
-    toast({
-      title: "Cadastro Realizado",
+    toast.success("Cadastro Realizado", {
       description: "Seu cadastro como Master Trader foi concluído com sucesso! As métricas serão calculadas automaticamente com base nas suas operações na Bybit."
     });
 
@@ -161,16 +142,13 @@ const Settings = () => {
         // Atualizar trader com as métricas calculadas
         updateTraderMetrics(traderData.id, metrics);
         
-        toast({
-          title: "Métricas Atualizadas",
+        toast.success("Métricas Atualizadas", {
           description: "Suas métricas de desempenho foram calculadas com sucesso!"
         });
       } catch (error) {
         console.error("Erro ao calcular métricas iniciais:", error);
-        toast({
-          title: "Erro ao Calcular Métricas",
-          description: "Ocorreu um erro ao calcular suas métricas de desempenho. Será feita uma nova tentativa mais tarde.",
-          variant: "destructive"
+        toast.error("Erro ao Calcular Métricas", {
+          description: "Ocorreu um erro ao calcular suas métricas de desempenho. Será feita uma nova tentativa mais tarde."
         });
       }
     }, 2000);
@@ -191,8 +169,7 @@ const Settings = () => {
     
     setIsMasterTrader(false);
     
-    toast({
-      title: "Status Alterado",
+    toast.success("Status Alterado", {
       description: "Você não é mais um Master Trader e voltará a pagar taxas normalmente na plataforma."
     });
   };
