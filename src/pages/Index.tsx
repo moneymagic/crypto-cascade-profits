@@ -6,11 +6,14 @@ import { MasterTradersList } from "@/components/dashboard/MasterTradersList";
 import { BonusNetwork } from "@/components/dashboard/BonusNetwork";
 import { ExchangeConnections } from "@/components/dashboard/ExchangeConnections";
 import TestingEnvironment from "@/components/testing/TestingEnvironment";
+import LiveTradingSystem from "@/components/bybit/LiveTradingSystem";
 
 const Index = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <LiveTradingSystem />
+        
         <TestingEnvironment />
         
         <WelcomeCard />

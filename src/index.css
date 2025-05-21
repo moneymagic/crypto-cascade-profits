@@ -2,123 +2,130 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+ 
 @layer base {
   :root {
-    --background: 220 30% 95%;
-    --foreground: 215 70% 15%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 70% 15%;
-
+    --card-foreground: 222.2 84% 4.9%;
+ 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 70% 15%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --primary: 215 70% 15%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 220 15% 20%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 220 10% 95%;
-    --muted-foreground: 215 25% 40%;
-
-    --accent: 174 70% 45%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 215 20% 85%;
-    --input: 215 20% 85%;
-    --ring: 215 70% 15%;
-
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+ 
     --radius: 0.5rem;
-
-    --sidebar-background: 203 71% 14%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 174 70% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 200 100% 50%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 30% 20%;
-    --sidebar-ring: 174 70% 45%;
     
-    /* Crypto specific colors */
-    --crypto-blue: 220 100% 61%;
-    --crypto-purple: 270 100% 60%;
     --crypto-green: 142 71% 45%;
     --crypto-red: 0 84% 60%;
-    --crypto-yellow: 45 93% 58%;
-    
-    /* Premium dark theme colors */
-    --premium-dark: 223 29% 14%;
-    --premium-dark-accent: 222 25% 18%;
-    --premium-gradient-start: 224 79% 27%;
-    --premium-gradient-end: 271 64% 43%;
+    --crypto-blue: 217 91% 60%;
+    --crypto-yellow: 41 96% 59%;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
   }
-}
-
-.chart-container {
-  width: 100%;
-  height: 100%;
-  min-height: 300px;
-}
-
-.crypto-card {
-  @apply bg-card rounded-lg border border-border p-4 transition-all hover:shadow-lg hover:shadow-primary/10 hover:border-primary/30;
-}
-
-.dashboard-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
-}
-
-.profit-positive {
-  @apply text-crypto-green;
-}
-
-.profit-negative {
-  @apply text-crypto-red;
-}
-
-.gradient-line {
-  @apply h-1 bg-gradient-to-r from-vastcopy-teal via-vastcopy-blue to-vastcopy-purple rounded-full;
-}
-
-/* Atualizando os cards para um design mais premium */
-.card-premium {
-  @apply bg-gradient-to-br from-[#1A1F2C] to-[#252a38] text-white border-none shadow-lg;
-}
-
-.card-premium-light {
-  @apply bg-white shadow-lg border border-[#e0e0ff];
-}
-
-.secondary-bg {
-  @apply bg-[#f8fafc];
-}
-
-/* Cores específicas para rankings */
-.rank-v1 { @apply bg-blue-500; }
-.rank-v2 { @apply bg-indigo-500; }
-.rank-v3 { @apply bg-purple-500; }
-.rank-v4 { @apply bg-fuchsia-500; }
-.rank-v5 { @apply bg-pink-500; }
-.rank-v6 { @apply bg-rose-500; }
-.rank-v7 { @apply bg-orange-500; }
-.rank-v8 { @apply bg-amber-500; }
-
-/* Gradiente para os indicadores de progresso do ranking */
-.rank-progress {
-  @apply bg-gradient-to-r from-[#3772FF] to-[#8E33FF];
+  
+  /* Cores personalizadas para criptomoedas */
+  .text-crypto-green {
+    color: hsl(var(--crypto-green));
+  }
+  
+  .bg-crypto-green {
+    background-color: hsl(var(--crypto-green));
+  }
+  
+  .text-crypto-red {
+    color: hsl(var(--crypto-red));
+  }
+  
+  .bg-crypto-red {
+    background-color: hsl(var(--crypto-red));
+  }
+  
+  .text-crypto-blue {
+    color: hsl(var(--crypto-blue));
+  }
+  
+  .bg-crypto-blue {
+    background-color: hsl(var(--crypto-blue));
+  }
+  
+  .text-crypto-yellow {
+    color: hsl(var(--crypto-yellow));
+  }
+  
+  .bg-crypto-yellow {
+    background-color: hsl(var(--crypto-yellow));
+  }
+  
+  .border-crypto-green {
+    border-color: hsl(var(--crypto-green));
+  }
+  
+  .border-crypto-red {
+    border-color: hsl(var(--crypto-red));
+  }
+  
+  .border-crypto-blue {
+    border-color: hsl(var(--crypto-blue));
+  }
+  
+  .border-crypto-yellow {
+    border-color: hsl(var(--crypto-yellow));
+  }
 }
