@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BybitConnector from './BybitConnector';
@@ -10,6 +10,8 @@ import WebSocketMonitor from './WebSocketMonitor';
 import { useBybitTrading } from '@/hooks/useBybitTrading';
 
 const LiveTradingSystem: React.FC = () => {
+  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+  
   const {
     masterApi,
     setMasterApi,
@@ -26,6 +28,12 @@ const LiveTradingSystem: React.FC = () => {
     fetchBalances
   } = useBybitTrading();
 
+  const handleRefreshBalances = async () => {
+    setIsBalanceLoading(true);
+    await fetchBalances();
+    setTimeout(() => setIsBalanceLoading(false), 1000);
+  };
+
   return (
     <Card className="border shadow-md">
       <CardHeader className="bg-gradient-to-r from-[#1A1F2C] to-[#252a38] text-white rounded-t-lg">
@@ -35,13 +43,21 @@ const LiveTradingSystem: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <BybitConnector
             type="master"
-            onConnect={setMasterApi}
+            onConnect={(api) => {
+              setMasterApi(api);
+              setIsBalanceLoading(true);
+              setTimeout(() => setIsBalanceLoading(false), 2000);
+            }}
             onDisconnect={() => setMasterApi(null)}
             isConnected={!!masterApi}
           />
           <BybitConnector
             type="follower"
-            onConnect={setFollowerApi}
+            onConnect={(api) => {
+              setFollowerApi(api);
+              setIsBalanceLoading(true);
+              setTimeout(() => setIsBalanceLoading(false), 2000);
+            }}
             onDisconnect={() => setFollowerApi(null)}
             isConnected={!!followerApi}
           />
@@ -50,7 +66,8 @@ const LiveTradingSystem: React.FC = () => {
         <AccountBalances 
           masterBalance={masterBalance} 
           followerBalance={followerBalance} 
-          onRefreshBalances={fetchBalances}
+          onRefreshBalances={handleRefreshBalances}
+          isLoading={isBalanceLoading}
         />
         
         <WebSocketMonitor

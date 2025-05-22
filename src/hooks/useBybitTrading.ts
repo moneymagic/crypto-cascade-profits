@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import BybitAPI, { OrderParams } from '@/lib/bybitApi';
 import { TradeResult, WebSocketStatus } from '@/components/bybit/types';
 
@@ -26,33 +26,98 @@ export function useBybitTrading() {
 
   // Buscar saldos quando as APIs estiverem conectadas
   const fetchBalances = useCallback(async () => {
+    console.log("Tentando buscar saldos das contas...");
+    
     if (masterApi) {
       try {
+        console.log("Buscando saldo da conta master...");
         const response = await masterApi.getWalletBalance();
-        if (response?.result?.list?.[0]?.coin?.find((c: any) => c.coin === 'USDT')) {
-          const usdtCoin = response.result.list[0].coin.find((c: any) => c.coin === 'USDT');
-          setMasterBalance(parseFloat(usdtCoin.walletBalance));
+        console.log("Resposta da API master:", response);
+        
+        // Verificar se a resposta inclui moedas
+        if (response?.result?.list && response.result.list.length > 0) {
+          // Buscar primeiro a moeda USDT
+          const accountList = response.result.list;
+          
+          for (const account of accountList) {
+            if (account.coin && Array.isArray(account.coin)) {
+              const usdtCoin = account.coin.find((c: any) => c.coin === 'USDT');
+              
+              if (usdtCoin) {
+                console.log("Saldo USDT encontrado na conta master:", usdtCoin);
+                setMasterBalance(parseFloat(usdtCoin.walletBalance));
+                break;
+              }
+            }
+          }
+          
+          // Se não encontrou USDT especificamente, use o primeiro item disponível
+          if (masterBalance === null && accountList[0].coin && accountList[0].coin.length > 0) {
+            const firstCoin = accountList[0].coin[0];
+            console.log("Usando primeira moeda disponível na conta master:", firstCoin);
+            setMasterBalance(parseFloat(firstCoin.walletBalance));
+          }
+        } else {
+          console.log("Nenhuma moeda encontrada na resposta da API master");
         }
       } catch (error) {
-        console.error('Error fetching master balance:', error);
+        console.error('Erro ao buscar saldo master:', error);
+        toast({
+          title: "Erro ao buscar saldo",
+          description: "Não foi possível obter o saldo da conta master",
+          variant: "destructive"
+        });
       }
     }
     
     if (followerApi) {
       try {
+        console.log("Buscando saldo da conta follower...");
         const response = await followerApi.getWalletBalance();
-        if (response?.result?.list?.[0]?.coin?.find((c: any) => c.coin === 'USDT')) {
-          const usdtCoin = response.result.list[0].coin.find((c: any) => c.coin === 'USDT');
-          setFollowerBalance(parseFloat(usdtCoin.walletBalance));
+        console.log("Resposta da API follower:", response);
+        
+        // Verificar se a resposta inclui moedas
+        if (response?.result?.list && response.result.list.length > 0) {
+          // Buscar primeiro a moeda USDT
+          const accountList = response.result.list;
+          
+          for (const account of accountList) {
+            if (account.coin && Array.isArray(account.coin)) {
+              const usdtCoin = account.coin.find((c: any) => c.coin === 'USDT');
+              
+              if (usdtCoin) {
+                console.log("Saldo USDT encontrado na conta follower:", usdtCoin);
+                setFollowerBalance(parseFloat(usdtCoin.walletBalance));
+                break;
+              }
+            }
+          }
+          
+          // Se não encontrou USDT especificamente, use o primeiro item disponível
+          if (followerBalance === null && accountList[0].coin && accountList[0].coin.length > 0) {
+            const firstCoin = accountList[0].coin[0];
+            console.log("Usando primeira moeda disponível na conta follower:", firstCoin);
+            setFollowerBalance(parseFloat(firstCoin.walletBalance));
+          }
+        } else {
+          console.log("Nenhuma moeda encontrada na resposta da API follower");
         }
       } catch (error) {
-        console.error('Error fetching follower balance:', error);
+        console.error('Erro ao buscar saldo follower:', error);
+        toast({
+          title: "Erro ao buscar saldo",
+          description: "Não foi possível obter o saldo da conta follower",
+          variant: "destructive"
+        });
       }
     }
-  }, [masterApi, followerApi]);
+  }, [masterApi, followerApi, masterBalance, followerBalance]);
 
+  // Buscar saldos imediatamente quando as APIs forem conectadas
   useEffect(() => {
-    fetchBalances();
+    if (masterApi || followerApi) {
+      fetchBalances();
+    }
   }, [masterApi, followerApi, fetchBalances]);
 
   // Handler for WebSocket messages
