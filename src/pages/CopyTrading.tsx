@@ -11,6 +11,7 @@ import { getProfile } from "@/lib/supabase";
 import { getFollowedTraders, getTrades } from "@/lib/database";
 import { toast } from "@/components/ui/use-toast";
 import { RefreshCw } from "lucide-react";
+import { useBybitTrading } from "@/hooks/useBybitTrading";
 
 interface TraderType {
   id: string;
@@ -52,6 +53,10 @@ const CopyTrading = () => {
   const [allocatedBalance, setAllocatedBalance] = useState(0);
   const [profitBalance, setProfitBalance] = useState(0);
   const [isUpdatingBalance, setIsUpdatingBalance] = useState(false);
+  
+  // Obter o saldo da conta Bybit usando o hook useBybitTrading
+  const { masterBalance, followerBalance, fetchBalances } = useBybitTrading();
+  const bybitBalance = (masterBalance || 0) + (followerBalance || 0);
 
   const loadData = async () => {
     if (!user) return;
@@ -79,6 +84,9 @@ const CopyTrading = () => {
       // Carregar operações
       const tradesData = await getTrades(user.id);
       setRecentTrades(tradesData);
+      
+      // Buscar saldos das contas Bybit
+      await fetchBalances();
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast({
@@ -98,6 +106,8 @@ const CopyTrading = () => {
   const handleUpdateBalances = async () => {
     setIsUpdatingBalance(true);
     try {
+      // Buscar saldos das contas Bybit
+      await fetchBalances();
       await loadData();
       toast({
         title: "Saldos atualizados",
@@ -172,14 +182,28 @@ const CopyTrading = () => {
               <div className="text-2xl font-bold text-crypto-green">+${profitBalance.toFixed(2)}</div>
             </div>
           </div>
-          <Button 
-            onClick={handleUpdateBalances}
-            disabled={isUpdatingBalance}
-            className="gap-2"
-          >
-            <RefreshCw size={16} className={isUpdatingBalance ? "animate-spin" : ""} />
-            {isUpdatingBalance ? "Atualizando..." : "Atualizar Saldos"}
-          </Button>
+          
+          <div className="border border-border bg-background rounded-lg p-4 mb-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-medium">Saldo Bybit Disponível</h3>
+                <div className="text-2xl font-bold text-vastcopy-teal mt-1">${bybitBalance.toFixed(2)} USDT</div>
+                {masterBalance !== null && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Master: ${masterBalance.toFixed(2)} • Follower: ${followerBalance ? followerBalance.toFixed(2) : "0.00"}
+                  </div>
+                )}
+              </div>
+              <Button 
+                onClick={handleUpdateBalances}
+                disabled={isUpdatingBalance}
+                className="gap-2 bg-vastcopy-teal hover:bg-vastcopy-teal/90"
+              >
+                <RefreshCw size={16} className={isUpdatingBalance ? "animate-spin" : ""} />
+                {isUpdatingBalance ? "Atualizando..." : "Atualizar Saldos"}
+              </Button>
+            </div>
+          </div>
         </div>
         
         <Tabs defaultValue="followed">
