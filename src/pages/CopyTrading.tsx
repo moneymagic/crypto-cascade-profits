@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getProfile } from "@/lib/supabase";
 import { getFollowedTraders, getTrades } from "@/lib/database";
 import { toast } from "@/components/ui/use-toast";
+import { RefreshCw } from "lucide-react";
 
 interface TraderType {
   id: string;
@@ -50,48 +51,69 @@ const CopyTrading = () => {
   const [userBalance, setUserBalance] = useState(0);
   const [allocatedBalance, setAllocatedBalance] = useState(0);
   const [profitBalance, setProfitBalance] = useState(0);
+  const [isUpdatingBalance, setIsUpdatingBalance] = useState(false);
+
+  const loadData = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      
+      // Carregar dados do perfil do usuário
+      const profile = await getProfile();
+      if (profile) {
+        setUserBalance(profile.balance || 0);
+      }
+      
+      // Carregar traders seguidos
+      const followedData = await getFollowedTraders(user.id);
+      setFollowedTraders(followedData);
+      
+      // Calcular saldo alocado (30% do saldo total para este exemplo)
+      const allocated = profile?.balance ? profile.balance * 0.3 : 0;
+      setAllocatedBalance(allocated);
+      
+      // Calcular lucro fictício para demonstração (em uma implementação real viria do banco)
+      setProfitBalance(allocated * 0.15);
+      
+      // Carregar operações
+      const tradesData = await getTrades(user.id);
+      setRecentTrades(tradesData);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível obter as informações de copy trading.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        
-        // Carregar dados do perfil do usuário
-        const profile = await getProfile();
-        if (profile) {
-          setUserBalance(profile.balance || 0);
-        }
-        
-        // Carregar traders seguidos
-        const followedData = await getFollowedTraders(user.id);
-        setFollowedTraders(followedData);
-        
-        // Calcular saldo alocado (30% do saldo total para este exemplo)
-        const allocated = profile?.balance ? profile.balance * 0.3 : 0;
-        setAllocatedBalance(allocated);
-        
-        // Calcular lucro fictício para demonstração (em uma implementação real viria do banco)
-        setProfitBalance(allocated * 0.15);
-        
-        // Carregar operações
-        const tradesData = await getTrades(user.id);
-        setRecentTrades(tradesData);
-      } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-        toast({
-          title: "Erro ao carregar dados",
-          description: "Não foi possível obter as informações de copy trading.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-    
     loadData();
   }, [user]);
+
+  const handleUpdateBalances = async () => {
+    setIsUpdatingBalance(true);
+    try {
+      await loadData();
+      toast({
+        title: "Saldos atualizados",
+        description: "Informações de saldo atualizadas com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar saldos:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar os saldos.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingBalance(false);
+    }
+  };
 
   const handleStopFollowing = async (traderId: string) => {
     try {
@@ -150,7 +172,14 @@ const CopyTrading = () => {
               <div className="text-2xl font-bold text-crypto-green">+${profitBalance.toFixed(2)}</div>
             </div>
           </div>
-          <Button>Ajustar Alocação</Button>
+          <Button 
+            onClick={handleUpdateBalances}
+            disabled={isUpdatingBalance}
+            className="gap-2"
+          >
+            <RefreshCw size={16} className={isUpdatingBalance ? "animate-spin" : ""} />
+            {isUpdatingBalance ? "Atualizando..." : "Atualizar Saldos"}
+          </Button>
         </div>
         
         <Tabs defaultValue="followed">
