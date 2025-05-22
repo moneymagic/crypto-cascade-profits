@@ -1,6 +1,6 @@
 import BybitAPI, { OrderParams } from '@/lib/bybitApi';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { toast } from "sonner"; // Usando sonner para toast
 
 // Interface para o master trader com seguidores
 interface MasterTraderWithFollowers {

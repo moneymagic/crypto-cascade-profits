@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import BybitAPI from '@/lib/bybitApi';
 import { getApiKeys, saveApiKey } from '@/lib/database';
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,8 +64,7 @@ const BybitConnector = ({ type, onConnect, onDisconnect, isConnected }: BybitCon
     if (!apiKey || !apiSecret || !user) {
       toast({
         title: "Erro",
-        description: "API Key e Secret são obrigatórios",
-        variant: "destructive"
+        description: "API Key e Secret são obrigatórios"
       });
       return;
     }

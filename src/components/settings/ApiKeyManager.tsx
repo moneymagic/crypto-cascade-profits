@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,14 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { InfoIcon, Key } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveApiKey, getApiKeys, deleteApiKey } from "@/lib/database";
 
 const ApiKeyManager = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [masterApiKey, setMasterApiKey] = useState("");
@@ -63,7 +61,7 @@ const ApiKeyManager = () => {
     }
     
     loadApiKeys();
-  }, [user, toast]);
+  }, [user]);
 
   const handleSaveMasterKey = async () => {
     if (!user) return;
